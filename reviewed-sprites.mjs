@@ -42,7 +42,15 @@ export function landBlendAlpha(u,v){
  const a=Math.max(0,Math.min(1,(.84+variation-edge)/.24));
  return a*a*(3-2*a);
 }
-export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09}={}){
+// Dense resource art reaches much closer to the source hex's perimeter than
+// terrain does. Keep that content intact, then inset the whole illustration so
+// its outer grass still meets the shared ground before the game tile boundary.
+export function containedSpriteAlpha(u,v){
+ const edge=Math.max(Math.abs(u),Math.abs(u)*.5+Math.abs(v));
+ const a=Math.max(0,Math.min(1,(.965-edge)/.045));
+ return a*a*(3-2*a);
+}
+export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,blend}={}){
  const [sx,sy,sw,sh]=rect,c=document.createElement('canvas');c.width=sw;c.height=sh;
  const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,sx,sy,sw,sh,0,0,sw,sh);
  if(kind==='overlay'||kind==='texture')return c;
@@ -58,7 +66,7 @@ export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09}={}
  const data=g.getImageData(0,0,256,296);
  for(let y=0;y<296;y++)for(let x=0;x<256;x++){
   const u=Math.abs((x+.5)/128-1),v=Math.abs((y+.5)/148-1),edge=Math.max(u,u*.5+v);
-  data.data[(y*256+x)*4+3]*=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):landBlendAlpha((x+.5)/128-1,(y+.5)/148-1);
+  data.data[(y*256+x)*4+3]*=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):(blend==='contained'?containedSpriteAlpha:landBlendAlpha)((x+.5)/128-1,(y+.5)/148-1);
  }
  g.putImageData(data,0,0);return tile;
 }
@@ -70,7 +78,7 @@ export function createReviewedSprites(onReady){
    catch(e){errors.push(file+': '+e.message);}onReady();resolve();
   };im.onerror=()=>{errors.push(file);resolve();};im.src=new URL(file,import.meta.url).href;
  })));
- return {ready,errors,tiles,draw(ctx,key,x,y,scale){const tile=tiles.get(key);if(!tile)return false;ctx.drawImage(tile,x-scale*.55,y-scale*.636,scale*1.1,scale*1.272);return true;},
+ return {ready,errors,tiles,draw(ctx,key,x,y,scale){const tile=tiles.get(key);if(!tile)return false;const size=scale*(SPRITES[key].inset??1);ctx.drawImage(tile,x-size*.55,y-size*.636,size*1.1,size*1.272);return true;},
   drawDeposit(ctx,tile,resource,x,y,scale){
    const key=reviewedDepositKey(tile,resource),art=tiles.get(key);if(!art)return false;
    const width=scale*DEPOSIT_WIDTH,height=scale*DEPOSIT_HEIGHT;

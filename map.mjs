@@ -5,6 +5,7 @@ import {surfaceSites,surfacePatch,readSurfaceTextures,seaTextureStrength,drawTow
 import {TERRAIN_SURFACES,groundPatterns,drawBiome} from './terrain-art.mjs';
 import {createMiniAtlas,seaSurface,atlasCompass} from './royal-map-art.mjs';
 import {coastlineGeometry} from './coastline.mjs';
+import {provinceBorderEdges,drawProvinceBorders} from './map-borders.mjs';
 import {selectionRing,labelPlacer,developmentMark} from './cartography.mjs';
 import {pendingAttackGroups} from './map-orders.mjs';
 import {MILITARY_ATLAS,drawMilitarySprite} from './military-art.mjs';
@@ -154,16 +155,10 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   if(!atlas&&scale>=30){ctx.save();ctx.strokeStyle=planningCivilian()?'#354b2b38':'#354b2b0a';ctx.lineWidth=scale>=66?.65:.4;
    for(const t of s.tiles){if(!visible(s,s.player,t))continue;const p=screen(t);if(p.x< -scale||p.y< -scale||p.x>w+scale||p.y>h+scale)continue;hex(p.x,p.y,scale*.57735);ctx.stroke();}
    ctx.restore();}
-  // Draw borders after terrain, with each nation's colour on its own side.
+  // Keep province boundaries legible at every zoom; national colours sit above
+  // the lighter internal boundaries and stay on their own side of the frontier.
   const ownershipColor=id=>s.nations[id]?.alive===false?'#a29d8f':s.nations[id]?.color??'#9b8865';
-  for(const t of s.tiles){if(!visible(s,s.player,t))continue;const a=screen(t);
-   for(const id of neighbourIds(t)){const q=ix.get(id);if(!q||q.province===t.province||!visible(s,s.player,q)||q.id<t.id)continue;
-    const b=screen(q),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,px=-dy/len*scale*.2887,py=dx/len*scale*.2887;
-    const edge=(offset,color,width)=>{ctx.beginPath();ctx.moveTo(mx+px+dx/len*offset,my+py+dy/len*offset);ctx.lineTo(mx-px+dx/len*offset,my-py+dy/len*offset);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();};
-    if(t.owner===q.owner){if(scale>=18){edge(0,'#5c62564d',1.6);edge(0,'#f2eddb88',.8);}}
-    else{const band=Math.max(.35,Math.min(3.5,scale*.065));edge(0,'#38453b',band*2+.6);edge(-band/2,ownershipColor(t.owner),band);edge(band/2,ownershipColor(q.owner),band);}
-   }
-  }
+  drawProvinceBorders(ctx,provinceBorderEdges(s.tiles,ix,visibleIds),screen,scale,ownershipColor);
   ctx.restore();
   const unchartedSea=s.seas?.cellZones['28,28'],unchartedLand=ix.get('28,28');
   if(!(unchartedSea&&(s.nations[s.player].seenSea??[]).includes(unchartedSea))&&!(unchartedLand&&visible(s,s.player,unchartedLand))){const p=screen({x:28,y:28});ctx.save();ctx.fillStyle='#43594f';ctx.font='italic 14px Georgia';ctx.textAlign='center';ctx.fillText('Unexplored',p.x,p.y);ctx.restore();}

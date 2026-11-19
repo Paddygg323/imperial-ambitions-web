@@ -160,7 +160,9 @@ export const SPRITES = {
       446,
       393,
       345
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "009": {
     "file": "assets/reviewed/c22de5988b.png",
@@ -169,7 +171,9 @@ export const SPRITES = {
       446,
       392,
       345
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "011": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -196,7 +200,9 @@ export const SPRITES = {
       45,
       479,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "014": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -259,7 +265,9 @@ export const SPRITES = {
       20,
       700,
       780
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "010-level-1": {
     "file": "assets/reviewed/4d894218df.png",
@@ -268,7 +276,9 @@ export const SPRITES = {
       5,
       535,
       595
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "010-level-2": {
     "file": "assets/reviewed/4d894218df.png",
@@ -277,7 +287,9 @@ export const SPRITES = {
       5,
       535,
       595
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "010-level-3": {
     "file": "assets/reviewed/4d894218df.png",
@@ -286,7 +298,9 @@ export const SPRITES = {
       660,
       535,
       595
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "010-level-4": {
     "file": "assets/reviewed/4d894218df.png",
@@ -295,7 +309,9 @@ export const SPRITES = {
       660,
       535,
       595
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "019-level1": {
     "file": "assets/reviewed/80d4c3151d.png",
