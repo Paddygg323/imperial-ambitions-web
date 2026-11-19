@@ -1,0 +1,47 @@
+.battle-view{height:100dvh;display:flex;flex-direction:column;background:#e8dfc8;color:#262920;font:14px system-ui;overflow:hidden}.battle-view *{box-sizing:border-box}.battle-view header{background:#253b36;color:#fff2d6;padding:10px 12px;display:grid;gap:4px}.battle-view header span{font-size:12px}.battle-view button{font:inherit;min-height:44px;background:#fff8e7;border:1px solid #9a8c70;border-radius:6px;color:#263c35;cursor:pointer}.battle-view button:disabled{opacity:.45;cursor:default}.battle-tools,.battle-actions{display:flex;gap:6px;padding:6px 10px}.battle-tools button,.battle-actions button{flex:1}.battle-viewport{flex:1;min-height:160px;overflow:auto;overscroll-behavior:contain;background:#6b8060;touch-action:pan-x pan-y}.battle-board{position:relative;background:repeating-linear-gradient(0deg,#718768 0px,#718768 40px,#69815f 41px,#69815f 82px)}.battle-view .battle-tile{position:absolute;min-height:0;border-radius:20%;background:transparent;border:1px solid #b6c7a140;color:#d9e3b4;padding:0;display:grid;align-content:center;justify-items:center;font-size:11px;gap:3px}.battle-view .battle-tile.friendly{background:#284d76;color:white;border:2px solid #d5e5ff}.battle-view .battle-tile.hostile{background:#78372f;color:white;border:2px solid #f6c4a1}.battle-view .battle-tile.reachable:not(.friendly):not(.hostile){background:#8ec7df75;color:#102b3c}.battle-view .battle-tile.target{outline:3px solid #ffcb65;outline-offset:-3px}.battle-view .battle-tile.selected{box-shadow:inset 0 0 0 3px #ffe293}.battle-tile i{height:5px;width:85%;background:linear-gradient(to right,#8cdb68 0 var(--morale),#a7a59d var(--morale) var(--health),#a43328 var(--health));display:block}.battle-detail{padding:8px 12px;min-height:77px;border-top:2px solid #afa17f}.battle-detail p{margin:3px 0;font-size:12px}.battle-roster{display:flex;overflow-x:auto;gap:6px;padding:4px 10px;flex-shrink:0}.battle-roster button{min-width:110px;padding:5px 8px}.battle-roster small{display:block;font-size:11px}.battle-roster [aria-pressed=true]{outline:2px solid #996f23;outline-offset:-2px}.battle-hint,.battle-error{margin:0;padding:2px 12px 5px;font-size:12px}.battle-error:empty{display:none}.battle-error{color:#9a241b}@media(max-height:550px){.battle-detail{min-height:0}.battle-detail p:last-child,.battle-hint{display:none}.battle-view header{padding:4px 10px}.battle-tools{padding:2px 10px}.battle-roster{max-height:54px}}
+
+.battle-view .battle-tile.wall:not(.friendly):not(.hostile){background:#6b6254;border:2px solid #d5c6a6;color:#fff7e5}.battle-view .battle-tile.breach:not(.friendly):not(.hostile){border:2px dashed #d5c6a6;background:#8d856955}.battle-tile small{font-size:10px}
+
+.battle-result{padding:4px 12px;background:#fff3d3;border-bottom:1px solid #9a8c70}.battle-result p{margin:3px 0;font-size:12px}
+
+.battle-view .battle-tile.terrain-1{background-image:repeating-linear-gradient(60deg,transparent 0 7px,#26492f55 8px 10px)}
+.battle-view .battle-tile.terrain-2{background-image:radial-gradient(#23452b88 1px,transparent 2px);background-size:7px 7px}
+.battle-view .battle-tile.terrain-3{background-image:repeating-linear-gradient(0deg,transparent 0 7px,#c5b57a66 8px 10px)}
+.battle-view .battle-tile.terrain-4{background-color:#414c52;color:#d5d6cc}
+.battle-view .battle-tile.terrain-5{border-style:dashed}
+
+/* Match the campaign's brass and enamel instruments. */
+.battle-view{background:#e6d5ac;color:#332d22;font-family:Georgia,serif}.battle-view header{background:linear-gradient(110deg,#142f35,#31595b);border-bottom:3px ridge #b69a58;color:#f2e3b8}.battle-view button{border-radius:2px;border-color:#aa935e;background:linear-gradient(#f8efcf,#d7c295);box-shadow:inset 0 1px #fff6d6}.battle-tools,.battle-actions,.battle-roster{background:#24494e;border-bottom:1px solid #b69a58}.battle-detail{background:linear-gradient(100deg,#f0e3c0,#d5bf91);border-top:3px ridge #b69a58}.battle-view .battle-tile.friendly,.battle-view .battle-tile.hostile{background-image:url('assets/atlas.png');background-size:600% 200%;background-position:100% 0%;background-repeat:no-repeat;text-shadow:0 1px 2px #000;font-weight:bold}.battle-view .battle-tile{border-radius:3px}.battle-board{background:repeating-linear-gradient(17deg,#788365 0px,#788365 9px,#748060 10px,#748060 18px)}
+
+.military-portrait{display:inline-block;position:relative;flex:none;width:72px;height:72px;pointer-events:none}.military-paint{position:absolute;display:block;background-image:url('assets/royal-regiments.png');background-repeat:no-repeat}
+.regiment-card>.military-portrait{float:left;margin-right:12px}.regiment-card::after{content:'';display:block;clear:both}
+
+.battle-view .battle-tile.friendly,.battle-view .battle-tile.hostile{background-image:none}.battle-view .battle-tile{overflow:visible}.battle-tile .military-portrait{position:absolute;left:0;right:auto;bottom:7px;width:100%;height:100%;z-index:1}.battle-tile .unit-caption{position:relative;z-index:2;align-self:end;margin-top:27px;font-size:9px;color:white;background:#102832b8;padding:0 2px;line-height:11px}.battle-tile i{position:absolute;bottom:1px;z-index:3}.battle-roster .military-portrait{display:block;width:44px;height:44px;margin:auto}
+.battle-board{background-image:url('assets/terrain.png');background-size:1536px 1024px;background-position:0 0}.battle-board{background-image:linear-gradient(#9ca980d9,#9ca980d9),url('assets/terrain.png')}
+
+.battle-view .battle-tile.terrain-1:not(.friendly):not(.hostile),.battle-view .battle-tile.terrain-2:not(.friendly):not(.hostile){background-image:none;background-color:#405a2424}.battle-view .battle-tile.terrain-3:not(.friendly):not(.hostile){background-image:none;background-color:#b49b5e20}.battle-view .battle-tile.reachable:not(.friendly):not(.hostile){background-color:#8ec7df75}
+
+/* Painted battlefield: units stand on the landscape, not coloured cards. */
+.battle-board{background-color:#8b9a65;background-image:linear-gradient(#8895558c,#a1a56a70),url('assets/royal-meadow.png');background-size:auto,cover}
+.battle-view .battle-tile{border:0;background:transparent;box-shadow:none;isolation:isolate}
+.battle-cell{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:0;fill:transparent;stroke:#35452b30;stroke-width:.7}
+.battle-view .battle-tile.friendly,.battle-view .battle-tile.hostile{border:0;background:none;box-shadow:none}
+.battle-view .battle-tile.reachable:not(.friendly):not(.hostile){background:none}
+.battle-tile.reachable .battle-cell{fill:#a4d3d633;stroke:#c9e4d578;stroke-width:1.3}
+.battle-view .battle-tile.selected{box-shadow:none}
+.battle-tile.selected .battle-cell{fill:#ffe29a20;stroke:#ffe6a4;stroke-width:3}
+.battle-view .battle-tile.target{outline:none}
+.battle-tile.target .battle-cell{stroke:#f3c16e;stroke-width:3;stroke-dasharray:7 3}
+.battle-formation{position:absolute;inset:0 0 9px;pointer-events:none;z-index:2;filter:drop-shadow(1px 2px 1px #26311e65)}
+.battle-formation::before{content:'';position:absolute;left:12%;right:12%;bottom:9%;height:17%;background:#39452635;border-radius:50%;filter:blur(2px)}
+.formation-figure{position:absolute;transform:translate(-50%,-50%)}
+.battle-tile .formation-figure .military-portrait{inset:0;width:100%;height:100%}
+.battle-pennant{position:absolute;right:5%;top:3%;width:19%;height:19%;background:var(--nation-color);border:1px solid #f3dfaa;clip-path:polygon(0 0,100% 0,78% 50%,100% 100%,0 100%);z-index:4;filter:drop-shadow(0 1px 1px #000)}
+.battle-tile.spent .battle-formation{opacity:.7;filter:saturate(.6)}
+.battle-tile.broken .battle-pennant{transform:rotate(20deg)}
+.battle-tile .unit-caption{position:absolute;bottom:5px;margin:0;background:#233122b8;font:8px Georgia,serif;padding:0 3px;border-radius:2px;line-height:10px}
+.battle-tile i{height:3px;width:65%;bottom:1px;border-radius:1px;box-shadow:0 1px 1px #293623}
+.battle-view .battle-tile.terrain-1:not(.friendly):not(.hostile),.battle-view .battle-tile.terrain-2:not(.friendly):not(.hostile){background:none}
+.battle-tile.terrain-1 .battle-cell{fill:#3b542d28}.battle-tile.terrain-2 .battle-cell{fill:#293e2a38}.battle-tile.terrain-3 .battle-cell{fill:#c0b17c30}
+.battle-board.overview .unit-caption{display:none}.battle-board.overview .battle-formation{bottom:3px}.battle-board.overview .battle-tile i{height:2px}
+.battle-view .battle-tile.wall:not(.friendly):not(.hostile){background:repeating-linear-gradient(0deg,#aaa083 0 6px,#766f5d 7px 8px);border:2px ridge #d7c8a0;box-shadow:2px 3px 2px #3b40294d}

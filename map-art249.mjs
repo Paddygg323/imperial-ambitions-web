@@ -1,0 +1,7 @@
+import {largeTown} from './landscape-art.mjs';
+const townBounds=[[63, 38, 365, 354], [46, 40, 377, 354], [42, 40, 382, 365], [24, 14, 409, 376], [15, 26, 417, 410], [2, 28, 421, 402], [4, 30, 425, 415], [5, 13, 436, 422]];
+export function townAppearance(state,t){return {large:largeTown(state,t),fort:Math.min(3,Math.max(0,state.provinces.find(p=>p.id===t.province)?.fort??0))};}
+export function drawFortifiedTown(ctx,image,state,t,x,y,scale){if(!image.complete||!image.naturalWidth)return;const {large,fort}=townAppearance(state,t),i=(large?4:0)+fort,[l,top,r,b]=townBounds[i],sx=Math.floor(i%4*image.naturalWidth/4),sy=Math.floor(Math.floor(i/4)*image.naturalHeight/2),bw=r-l,bh=b-top,width=scale*(large?1.04:.72),height=width*bh/bw*(1+Math.max(0,fort-1)*.085);ctx.save();ctx.fillStyle='#393c2927';ctx.beginPath();ctx.ellipse(x,y+height*.24,width*.47,height*.12,0,0,Math.PI*2);ctx.fill();ctx.restore();ctx.save();ctx.translate(x,y);ctx.scale(((t.x??0)*7+(t.y??0))%2?-1:1,1);ctx.drawImage(image,sx+l,sy+top,bw,bh,-width/2,-height*.62,width,height);ctx.restore();}
+// Measured isolated regions of the source atlas; do not assume equal cells.
+const ruralBounds=[[125,40,565,365],[900,5,720,410],[0,415,685,470],[686,440,1088,447]];
+export function drawRural(ctx,image,index,x,y,scale){if(!image.complete||!image.naturalWidth)return false;const box=ruralBounds[index],width=scale*[.78,.73,.9,1.14][index],height=width*box[3]/box[2];ctx.drawImage(image,...box,x-width/2,y-height*.48,width,height);return true;}

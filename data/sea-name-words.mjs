@@ -1,0 +1,2 @@
+// Original English sea-name vocabulary, string resources40001–40037.
+export default ["Red", "Black", "Blue", "Green", "Wine-Dark", "Briny", "Atlantic", "Pacific", "Orestian", "Pelican", "Blood", "Dead", "Sand", "Cylon", "Good Hope", "Clytemnestra", "Coral", "Clamshell", "Pearl", "Ra", "Sorrow", "Poseidon", "Nautilus", "Yellow", "Octopus", "Oriental", "Tempest", "Anduin", "Frog", "Holy", "Occidental", "Huttick", "Aoki", "Underwood", "Baba", "Minnow", "Oleander"];
