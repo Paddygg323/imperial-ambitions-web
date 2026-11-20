@@ -1,5 +1,5 @@
 {
-  "revision": "bb802be48e9392e84ece86b09ae5912ffd2bbdc4",
+  "revision": "7c7954615119bd39a2af49a9996646f56e165418",
   "dirty": false,
   "files": 386,
   "source": "game/",
@@ -368,7 +368,7 @@
     "starting-technology.mjs": "ab4e212bd7e5159cf116794dd60ae700295c1b2fcdb2f6d8f3b821161f05254c",
     "strategic-strength.mjs": "b59399c6d6949e05d205bd5e2136c1a16f1bb4375708fbcb6319cca9e9951c90",
     "style.css": "5525a9164d37fc3fcc28d7d0b9e66ae799287fd818792fa5cbb86e5658c5bc63",
-    "sw.js": "3c799d7dbba1d1f7266ca8705b4307aa1a341bb9a536e58fafbe150cfb90f897",
+    "sw.js": "d5541f6850da448f18732737b6bbb968859e74502f93ca333f7971797cf8527c",
     "tactical.mjs": "58dba541659cf15f072a4a3484acdb0e7136f86103cd65b38a130daa1e3b8f25",
     "terrain-art.mjs": "4c7d5a64dedf0dbe554ccbf700bbc2e2c1cd29bae7a74f9f719410830a769d5d",
     "terrain-blend.mjs": "0f6ac4c6e08884b07a819ab2531ec7d72cdf4b7b2fdfad17c1c446ee0e8286b9",
