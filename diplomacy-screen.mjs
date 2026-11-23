@@ -81,6 +81,6 @@ export function diplomacyScreen(s,ui){
  html+='</section><div class="diplomatic-workspace">';
  const view=ui.mapView;
  const mapTools='<div class="diplomacy-map-switch" aria-label="Map information">'+btn('Political map','diplomacyMapView',{view:'political'},view==='political')+btn('Relations map','diplomacyMapView',{view:'relations'},view==='relations')+'</div>';
- html+=diplomacyMap(s,target,ui.region,{view,eligibility,markers,tools:mapTools});
+ html+=diplomacyMap(s,target,{view,eligibility,markers,tools:mapTools});
  return html+dossier+'</div></section>';
 }

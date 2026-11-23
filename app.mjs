@@ -7,7 +7,8 @@ import {SAVE_SLOT as SAVE} from './save-policy.mjs';
 import {researchAttention,relevantNews,newsPriority,strengthWarnings} from './news-priority.mjs';
 import {campaignFavouredPartner} from './campaign-external-resources.mjs';
 import {civilianMapOrder} from './map-orders.mjs';
-import {diplomacyMap,countryName,independentNewWorld,fitDiplomacyTargets} from './diplomacy-map.mjs';
+import {diplomacyMap,countryName,independentNewWorld} from './diplomacy-map.mjs';
+import {mountDiplomacyViewport} from './diplomacy-viewport.mjs';
 import {tileLabel,reportText} from './location-label.mjs';
 import {fleetMapTarget} from './fleet-map-target.mjs';
 import {transportConstructionTurns} from './civilian-duration.mjs';
@@ -67,7 +68,9 @@ function orderReceipt(){
 function issue(action){state=command(state,state.player,action);persist();
  if(action.type==='civilian'&&!['wake','sleep','wait'].includes(action.job)||action.type==='army'&&['deploy','attack'].includes(action.job)||action.type==='fleet'&&['sail','patrol','blockade','beachhead'].includes(action.job))lastMapOrder={action:structuredClone(action),turn:state.turn};
  render();if(action.type==='civilian'&&action.job!=='wake'||action.type==='army'&&['deploy','attack','done','defend'].includes(action.job)||action.type==='fleet'&&['sail','patrol','blockade','beachhead','defend'].includes(action.job))setTimeout(()=>selectNextAvailable(),0);}
-let diplomacyCountry='france',diplomacyRegion='europe';
+let diplomacyCountry='france';
+const diplomacyViewport={position:1};
+let disposeDiplomacyViewport=()=>{};
 const diplomacyUI={mode:'treaties',action:null,policy:100,amount:1000,repeat:false,mapView:'political',receipt:null};
 let armyPlanning=false,armyOrderSelected=false;
 let fleetPlanning=false,fleetGroup=[],plannedDestination=null,researchProjectsExpanded=false;
@@ -267,7 +270,7 @@ function renderPanel(){
    const allies=(state.alliances??[]).filter(pair=>pair.includes(state.player)).map(pair=>pair.find(id=>id!==state.player)).filter(id=>state.nations[id]?.alive&&atWar(state,id,offer.proposer));
    html+=`<div class="card"><h3>Peace offer from ${esc(nameOf(offer.proposer))}</h3><p>Accepting ends this war and restores normal trade. Territory stays with its current owner.</p>${allies.length?`<p>Accepting also breaks your alliance with ${allies.map(id=>esc(nameOf(id))).join(', ')}.</p>`:''}${button('Accept peace','respondPeace',{proposer:offer.proposer,accept:true})}${button('Reject peace','respondPeace',{proposer:offer.proposer,accept:false})}</div>`;
   }
-  html+=diplomacyScreen(state,{...diplomacyUI,compact:innerWidth<=700||innerHeight<=550,country:diplomacyCountry,region:diplomacyRegion});
+  html+=diplomacyScreen(state,{...diplomacyUI,compact:innerWidth<=700||innerHeight<=550,country:diplomacyCountry});
   html+=`<p class="diplomacy-score">Old World control: ${totals.counts[state.player]} / ${totals.required} provinces required to win.</p>`;
  }else if(currentPanel==='rankings'){
   $('panelTitle').textContent='Power rankings';html=powerRankings(state);
@@ -367,8 +370,9 @@ function renderPanel(){
   html='<p class="notice">Single-player development build. Some original-game systems remain unfinished.</p><p>Your campaign is saved on this device. Export a backup before uninstalling, clearing app data or moving to another device. Windows game saves cannot be imported.</p>'+button('Export save','export')+'<h3>Import rebuild save</h3><input type="file" id="importSave" accept="application/json,.json"><h3>New development campaign</h3>'+button('New England campaign','newGame')+'<p>Export your current game before starting again.</p>';
  }
  $('panelBody').dataset.view=currentPanel;
+ disposeDiplomacyViewport();
  $('panelBody').innerHTML=html;
- if(currentPanel==='diplomacy')requestAnimationFrame(()=>fitDiplomacyTargets($('panelBody')));
+ disposeDiplomacyViewport=currentPanel==='diplomacy'?mountDiplomacyViewport($('panelBody'),diplomacyViewport):()=>{};
  const input=$('importSave');if(input)input.onchange=async()=>{try{if(input.files[0]){const next=loadGame(await input.files[0].text());state=next;persist();closePanel();home();render();}}catch(e){toast(e.message);}};
 }
 // A touch opens the picker on pointerup. Its following compatibility click
@@ -382,7 +386,7 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
  case 'undoLastOrder':{if(!lastMapOrder)break;const a=lastMapOrder.action;issue(a.type==='civilian'?{type:'cancelCivilian',unit:a.unit}:a.type==='army'?{type:'army',units:a.units,job:'cancel'}:{type:'fleet',ships:a.ships,job:'cancel'});lastMapOrder=null;orderReceipt();break;}
 
  case 'diplomacyCountry':{
-  diplomacyCountry=a.id;const choice=diplomaticChoice(state,a.id,diplomacyUI);
+  diplomacyCountry=a.id;if(b.closest('.atlas-key'))diplomacyViewport.focus=a.id;const choice=diplomaticChoice(state,a.id,diplomacyUI);
   if(choice.command){issue(choice.command);diplomacyUI.receipt=choice.message;diplomacyUI.action=null;if(['grants','subsidies'].includes(diplomacyUI.mode))diplomacyUI.mode='information';}
   else diplomacyUI.receipt=choice.reason??null;
   renderPanel();if(choice.message||choice.reason)toast(choice.message??choice.reason);break;}
@@ -394,7 +398,6 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
  case 'diplomacyRepeat':diplomacyUI.repeat=!diplomacyUI.repeat;renderPanel();break;
  case 'diplomacyMapView':diplomacyUI.mapView=a.view;if(['information','grants'].includes(diplomacyUI.mode))diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyCancel':issue(a);diplomacyUI.receipt=a.type==='diplomaticGrant'?'Grant rescinded. Any reserved money was refunded.':'Diplomatic order rescinded.';renderPanel();break;
- case 'diplomacyRegion':diplomacyRegion=a.region;renderPanel();break;
  case 'panel':openPanel(a.name);break;
  case 'nextAvailable':selectNextAvailable();break;
  case 'autoProduction':issue({type:'autoProduction',enabled:!nation().autoProduction});break;
@@ -464,7 +467,7 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
 }catch(err){toast(err.message);}});
 document.addEventListener('change',e=>{if(e.target.matches('[data-cargo]'))try{issue({type:'transport',good:e.target.dataset.cargo,quantity:Number(e.target.value)});}catch(error){toast(error.message);renderPanel();}});
 document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));
-new ResizeObserver(()=>{if(currentPanel==='diplomacy')fitDiplomacyTargets($('panelBody'));}).observe($('panel'));
+
 $('menu').onclick=()=>openPanel('menu');$('closePanel').onclick=closePanel;$('panel').addEventListener('cancel',e=>{if(state.market){e.preventDefault();return;}currentPanel=null;});
 $('home').onclick=home;$('strategic').onclick=()=>map.fit();$('nationView').onclick=()=>map.fitNation();$('zoomIn').onclick=()=>map.zoom(1.25);$('zoomOut').onclick=()=>map.zoom(.8);$('endTurn').onclick=()=>openPanel('review');
 home();render();selectNextAvailable(false);
