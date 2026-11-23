@@ -67,7 +67,7 @@ function orderReceipt(){
 function issue(action){state=command(state,state.player,action);persist();
  if(action.type==='civilian'&&!['wake','sleep','wait'].includes(action.job)||action.type==='army'&&['deploy','attack'].includes(action.job)||action.type==='fleet'&&['sail','patrol','blockade','beachhead'].includes(action.job))lastMapOrder={action:structuredClone(action),turn:state.turn};
  render();if(action.type==='civilian'&&action.job!=='wake'||action.type==='army'&&['deploy','attack','done','defend'].includes(action.job)||action.type==='fleet'&&['sail','patrol','blockade','beachhead','defend'].includes(action.job))setTimeout(()=>selectNextAvailable(),0);}
-let diplomacyCountry='france',diplomacyRegion=innerWidth<850||innerHeight<600?'europe':'world';
+let diplomacyCountry='france',diplomacyRegion='europe';
 const diplomacyUI={mode:'treaties',action:null,policy:100,amount:1000,repeat:false,mapView:'political',receipt:null};
 let armyPlanning=false,armyOrderSelected=false;
 let fleetPlanning=false,fleetGroup=[],plannedDestination=null,researchProjectsExpanded=false;
@@ -267,7 +267,7 @@ function renderPanel(){
    const allies=(state.alliances??[]).filter(pair=>pair.includes(state.player)).map(pair=>pair.find(id=>id!==state.player)).filter(id=>state.nations[id]?.alive&&atWar(state,id,offer.proposer));
    html+=`<div class="card"><h3>Peace offer from ${esc(nameOf(offer.proposer))}</h3><p>Accepting ends this war and restores normal trade. Territory stays with its current owner.</p>${allies.length?`<p>Accepting also breaks your alliance with ${allies.map(id=>esc(nameOf(id))).join(', ')}.</p>`:''}${button('Accept peace','respondPeace',{proposer:offer.proposer,accept:true})}${button('Reject peace','respondPeace',{proposer:offer.proposer,accept:false})}</div>`;
   }
-  html+=diplomacyScreen(state,{...diplomacyUI,country:diplomacyCountry,region:diplomacyRegion});
+  html+=diplomacyScreen(state,{...diplomacyUI,compact:innerWidth<=700||innerHeight<=550,country:diplomacyCountry,region:diplomacyRegion});
   html+=`<p class="diplomacy-score">Old World control: ${totals.counts[state.player]} / ${totals.required} provinces required to win.</p>`;
  }else if(currentPanel==='rankings'){
   $('panelTitle').textContent='Power rankings';html=powerRankings(state);
@@ -387,12 +387,12 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
   else diplomacyUI.receipt=choice.reason??null;
   renderPanel();if(choice.message||choice.reason)toast(choice.message??choice.reason);break;}
  case 'diplomacyMode':diplomacyUI.mode=a.mode;diplomacyUI.mapView=['grants','information'].includes(a.mode)?'relations':'political';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
- case 'diplomacyAction':diplomacyUI.action=a.action;diplomacyUI.receipt=null;renderPanel();if(innerWidth<650)document.querySelector('.diplomacy-atlas').scrollIntoView({block:'start'});break;
+ case 'diplomacyAction':diplomacyUI.action=a.action;diplomacyUI.receipt=null;renderPanel();if(innerWidth<=700||innerHeight<=550)document.querySelector('.diplomacy-atlas').scrollIntoView({block:'start'});break;
  case 'diplomacyInspect':diplomacyCountry=a.id;diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt='Review or rescind your pending orders below.';renderPanel();document.querySelector('.selected-country-strip').scrollIntoView({block:'center'});break;
  case 'diplomacyPolicy':diplomacyUI.policy=a.policy;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyAmount':diplomacyUI.amount=a.amount;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyRepeat':diplomacyUI.repeat=!diplomacyUI.repeat;renderPanel();break;
- case 'diplomacyMapView':diplomacyUI.mapView=a.view;if(['partners','information','grants'].includes(diplomacyUI.mode))diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
+ case 'diplomacyMapView':diplomacyUI.mapView=a.view;if(['information','grants'].includes(diplomacyUI.mode))diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyCancel':issue(a);diplomacyUI.receipt=a.type==='diplomaticGrant'?'Grant rescinded. Any reserved money was refunded.':'Diplomatic order rescinded.';renderPanel();break;
  case 'diplomacyRegion':diplomacyRegion=a.region;renderPanel();break;
  case 'panel':openPanel(a.name);break;
