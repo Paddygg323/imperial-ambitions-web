@@ -58,7 +58,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   const index=({meat:0,wool:1,horses:2,cotton:3,sugarCane:4,tobacco:5,spices:6,furs:7,iron:8,tin:8,copper:9,coal:10,fish:11})[resource];if(index===undefined||!resources.complete||!resources.naturalWidth)return false;const plant=['sugarCane','tobacco'].includes(resource),width=scale*(plant?.76:.78),height=scale*(plant?.70:.69);ctx.save();ctx.filter='saturate(1.26) contrast(1.07)';ctx.drawImage(resources,index%6*256,index<6?100:590,256,index<6?360:340,x-width/2,y-height*.42,width,height);ctx.restore();return true;}
  function detail(t,x,y,s,ix){
   const keyArt=reviewedSpriteKey(t,prospected(s,s.player,t)?t.resource:null);
-  if(reviewed.tiles.has(keyArt)){if(keyArt==='001-default')return;ctx.save();hex(x,y,scale*.579);ctx.clip();if(keyArt.startsWith('019-level'))reviewed.draw(ctx,'005',x,y,scale);reviewed.draw(ctx,keyArt,x,y,scale);ctx.restore();return;}
+  if(reviewed.tiles.has(keyArt)){if(keyArt==='001-default'||reviewed.isFeature(keyArt))return;ctx.save();hex(x,y,scale*.579);ctx.clip();if(keyArt.startsWith('019-level'))reviewed.draw(ctx,'005',x,y,scale);reviewed.draw(ctx,keyArt,x,y,scale);ctx.restore();return;}
 
   const ids=new Set([t.id,...neighbourIds(t)]);for(const id of [...ids]){const q=ix.get(id);if(q)for(const next of neighbourIds(q))ids.add(next);}
   const tiles=[...ids].map(id=>ix.get(id)).filter(q=>q&&visible(s,s.player,q));
@@ -114,12 +114,16 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    if(t.river&&scale>12){const ends=riverDirections(t.riverCode).map(direction=>{const id=riverNeighbor(t,direction);if(!id)return null;const [tx,ty]=id.split(',').map(Number),q=screen({x:tx,y:ty});return {x:(x+q.x)/2,y:(y+q.y)/2};}).filter(Boolean);if(ends.length===2){ctx.save();ctx.lineCap='round';ctx.beginPath();ctx.moveTo(ends[0].x,ends[0].y);ctx.quadraticCurveTo(x,y,ends[1].x,ends[1].y);ctx.strokeStyle='#708b7d';ctx.lineWidth=Math.max(2,scale*.055);ctx.stroke();ctx.strokeStyle='#507b89';ctx.lineWidth=Math.max(1,scale*.028);ctx.stroke();ctx.restore();}}
   }
   if(!atlas)drawRoadNetwork(ctx,s,ix,screen,t=>visible(s,s.player,t),scale);
+  // Coast/ground clipping must not cut off a tree canopy, development structure
+  // or coastal town. Visible objects are drawn as whole silhouettes afterwards.
+  ctx.restore();ctx.save();
   for(const t of [...s.tiles].sort((a,b)=>a.y-b.y||a.x-b.x)){const {x,y}=screen(t);if(x< -scale||y< -scale||x>w+scale||y>h+scale||!visible(s,s.player,t))continue;
    if(scale>=20){
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#23352b';ctx.font=`600 ${Math.max(9,scale*.22)}px system-ui`;
     const resource=prospected(s,s.player,t)?t.resource:null;
     if(resource){ctx.save();ctx.fillStyle='#34483114';ctx.beginPath();ctx.ellipse(x,y+scale*.14,scale*.23,scale*.065,0,0,Math.PI*2);ctx.fill();ctx.restore();}
     const reviewedTile=reviewed.tiles.has(reviewedSpriteKey(t,resource));
+    reviewed.drawFeature(ctx,reviewedSpriteKey(t,resource),x,y,scale);
     if(!reviewedTile&&resource!=='grain')drawCultivation(ctx,t,resource,x,y,scale);
     if(!reviewedTile){if(t.terrain===8)drawRural(ctx,ruralArt,3,x,y,scale);else if([6,7].includes(t.terrain))drawBiome(ctx,biomes,t.terrain-6,x,y,scale,t.x*31+t.y*17);
     if(t.terrain===9)drawBiome(ctx,biomes,5,x,y,scale,t.x*31+t.y*17);}

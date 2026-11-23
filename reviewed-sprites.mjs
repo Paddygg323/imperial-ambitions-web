@@ -42,17 +42,31 @@ export function landBlendAlpha(u,v){
  const a=Math.max(0,Math.min(1,(.84+variation-edge)/.24));
  return a*a*(3-2*a);
 }
-// Dense resource art reaches much closer to the source hex's perimeter than
-// terrain does. Keep that content intact, then inset the whole illustration so
-// its outer grass still meets the shared ground before the game tile boundary.
-export function containedSpriteAlpha(u,v){
+// Only remove the presentation rim here. A broad feather also erases the
+// subjects near it. Ground-only tiles still use landBlendAlpha above.
+export function containedSpriteAlpha(u,v,perimeter=.96){
  const edge=Math.max(Math.abs(u),Math.abs(u)*.5+Math.abs(v));
- const a=Math.max(0,Math.min(1,(.965-edge)/.045));
+ const a=Math.max(0,Math.min(1,(perimeter-edge)/.006));
  return a*a*(3-2*a);
 }
-export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,blend}={}){
+// Fit complete transparent silhouettes inside a point-up hex without masking
+// any leaves or feet. Measure alpha, not the PNG's transparent padding. The
+// extent is in the same width=1 coordinate system as the map's hex geometry.
+export function featureFrame(data,width,height){
+ let left=width,right=-1,top=height,bottom=-1;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(data[(y*width+x)*4+3]>8){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+ if(right<left)return {x:width/2,y:height/2,extent:Math.max(width,height)};
+ const cx=(left+right+1)/2,cy=(top+bottom+1)/2;let extent=0;
+ for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++)if(data[(y*width+x)*4+3]>8){
+  const dx=Math.abs(x+.5-cx)+.5,dy=Math.abs(y+.5-cy)+.5;
+  extent=Math.max(extent,2*dx,dx+Math.sqrt(3)*dy);
+ }
+ return {x:cx,y:cy,extent};
+}
+export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,blend,perimeter}={}){
  const [sx,sy,sw,sh]=rect,c=document.createElement('canvas');c.width=sw;c.height=sh;
  const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,sx,sy,sw,sh,0,0,sw,sh);
+ if(kind==='feature'){c.featureFrame=featureFrame(ctx.getImageData(0,0,sw,sh).data,sw,sh);return c;}
  if(kind==='overlay'||kind==='texture')return c;
  const pixels=ctx.getImageData(0,0,sw,sh).data;let l=sw,r=0,top=sh,b=0;
  for(let y=3;y<sh-3;y++)for(let x=3;x<sw-3;x++){
@@ -66,7 +80,7 @@ export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,ble
  const data=g.getImageData(0,0,256,296);
  for(let y=0;y<296;y++)for(let x=0;x<256;x++){
   const u=Math.abs((x+.5)/128-1),v=Math.abs((y+.5)/148-1),edge=Math.max(u,u*.5+v);
-  data.data[(y*256+x)*4+3]*=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):(blend==='contained'?containedSpriteAlpha:landBlendAlpha)((x+.5)/128-1,(y+.5)/148-1);
+  data.data[(y*256+x)*4+3]*=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):(blend==='contained'?containedSpriteAlpha((x+.5)/128-1,(y+.5)/148-1,perimeter):landBlendAlpha((x+.5)/128-1,(y+.5)/148-1));
  }
  g.putImageData(data,0,0);return tile;
 }
@@ -78,7 +92,13 @@ export function createReviewedSprites(onReady){
    catch(e){errors.push(file+': '+e.message);}onReady();resolve();
   };im.onerror=()=>{errors.push(file);resolve();};im.src=new URL(file,import.meta.url).href;
  })));
- return {ready,errors,tiles,draw(ctx,key,x,y,scale){const tile=tiles.get(key);if(!tile)return false;const size=scale*(SPRITES[key].inset??1);ctx.drawImage(tile,x-size*.55,y-size*.636,size*1.1,size*1.272);return true;},
+ const feature=(ctx,key,x,y,scale)=>{
+  const tile=tiles.get(key);if(!tile?.featureFrame)return false;
+  const frame=tile.featureFrame,size=scale*.88/frame.extent;
+  ctx.drawImage(tile,x-frame.x*size,y-frame.y*size,tile.width*size,tile.height*size);return true;
+ };
+ return {ready,errors,tiles,isFeature:key=>SPRITES[key]?.kind==='feature',drawFeature:feature,
+  draw(ctx,key,x,y,scale){const tile=tiles.get(key);if(!tile)return false;if(tile.featureFrame)return feature(ctx,key,x,y,scale);const size=scale*(SPRITES[key].inset??1);ctx.drawImage(tile,x-size*.55,y-size*.636,size*1.1,size*1.272);return true;},
   drawDeposit(ctx,tile,resource,x,y,scale){
    const key=reviewedDepositKey(tile,resource),art=tiles.get(key);if(!art)return false;
    const width=scale*DEPOSIT_WIDTH,height=scale*DEPOSIT_HEIGHT;

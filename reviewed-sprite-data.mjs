@@ -154,26 +154,24 @@ export const SPRITES = {
     ]
   },
   "008": {
-    "file": "assets/reviewed/c22de5988b.png",
+    "file": "assets/reviewed/257-hardwood.png",
     "rect": [
-      795,
-      446,
-      393,
-      345
+      0,
+      0,
+      1312,
+      1199
     ],
-    "blend": "contained",
-    "inset": 0.9
+    "kind": "feature"
   },
   "009": {
-    "file": "assets/reviewed/c22de5988b.png",
+    "file": "assets/reviewed/257-scrub.png",
     "rect": [
-      1192,
-      446,
-      392,
-      345
+      0,
+      0,
+      1312,
+      1199
     ],
-    "blend": "contained",
-    "inset": 0.9
+    "kind": "feature"
   },
   "011": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -182,7 +180,10 @@ export const SPRITES = {
       45,
       479,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "012": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -191,7 +192,10 @@ export const SPRITES = {
       45,
       478,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "013": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -202,7 +206,8 @@ export const SPRITES = {
       315
     ],
     "blend": "contained",
-    "inset": 0.9
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "014": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -211,7 +216,10 @@ export const SPRITES = {
       407,
       479,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "015-r4-4": {
     "file": "assets/reviewed/c660a1c389.png",
@@ -220,7 +228,9 @@ export const SPRITES = {
       500,
       405,
       455
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "016": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -229,7 +239,10 @@ export const SPRITES = {
       407,
       479,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "017": {
     "file": "assets/reviewed/c5be6f5221.png",
@@ -238,7 +251,10 @@ export const SPRITES = {
       769,
       479,
       315
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "018": {
     "file": "assets/reviewed/91b5c17379.png",
@@ -321,7 +337,9 @@ export const SPRITES = {
       627,
       627
     ],
-    "feather": 0.3
+    "feather": 0.3,
+    "blend": "contained",
+    "inset": 0.9
   },
   "019-level2": {
     "file": "assets/reviewed/80d4c3151d.png",
@@ -331,7 +349,9 @@ export const SPRITES = {
       627,
       627
     ],
-    "feather": 0.3
+    "feather": 0.3,
+    "blend": "contained",
+    "inset": 0.9
   },
   "019-level3": {
     "file": "assets/reviewed/80d4c3151d.png",
@@ -341,7 +361,9 @@ export const SPRITES = {
       627,
       627
     ],
-    "feather": 0.3
+    "feather": 0.3,
+    "blend": "contained",
+    "inset": 0.9
   },
   "019-level4": {
     "file": "assets/reviewed/80d4c3151d.png",
@@ -351,7 +373,9 @@ export const SPRITES = {
       627,
       627
     ],
-    "feather": 0.3
+    "feather": 0.3,
+    "blend": "contained",
+    "inset": 0.9
   },
   "cotton-1": {
     "file": "assets/reviewed/7b3eaf9469.png",
@@ -360,7 +384,10 @@ export const SPRITES = {
       0,
       535,
       520
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "cotton-2": {
     "file": "assets/reviewed/7b3eaf9469.png",
@@ -369,7 +396,10 @@ export const SPRITES = {
       0,
       535,
       520
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "cotton-3": {
     "file": "assets/reviewed/7b3eaf9469.png",
@@ -378,7 +408,10 @@ export const SPRITES = {
       625,
       535,
       520
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "cotton-4": {
     "file": "assets/reviewed/7b3eaf9469.png",
@@ -387,7 +420,10 @@ export const SPRITES = {
       625,
       535,
       520
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9,
+    "perimeter": 0.935
   },
   "spices-1": {
     "file": "assets/reviewed/a9c66c0375.png",
@@ -396,7 +432,9 @@ export const SPRITES = {
       10,
       405,
       455
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "spices-2": {
     "file": "assets/reviewed/a9c66c0375.png",
@@ -405,7 +443,9 @@ export const SPRITES = {
       10,
       405,
       455
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "spices-3": {
     "file": "assets/reviewed/a9c66c0375.png",
@@ -414,7 +454,9 @@ export const SPRITES = {
       505,
       405,
       455
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "spices-4": {
     "file": "assets/reviewed/a9c66c0375.png",
@@ -423,7 +465,9 @@ export const SPRITES = {
       505,
       405,
       455
-    ]
+    ],
+    "blend": "contained",
+    "inset": 0.9
   },
   "ore-tin": {
     "file": "assets/reviewed/253-tin.png",
