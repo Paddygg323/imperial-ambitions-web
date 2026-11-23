@@ -390,12 +390,12 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
   if(choice.command){issue(choice.command);diplomacyUI.receipt=choice.message;diplomacyUI.action=null;if(['grants','subsidies'].includes(diplomacyUI.mode))diplomacyUI.mode='information';}
   else diplomacyUI.receipt=choice.reason??null;
   renderPanel();if(choice.message||choice.reason)toast(choice.message??choice.reason);break;}
- case 'diplomacyMode':diplomacyUI.mode=a.mode;diplomacyUI.mapView=['grants','information'].includes(a.mode)?'relations':'political';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
+ case 'diplomacyMode':diplomacyUI.mode=a.mode;if(a.mode==='grants')diplomacyUI.repeat=false;diplomacyUI.mapView=['grants','information'].includes(a.mode)?'relations':'political';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyAction':diplomacyUI.action=a.action;diplomacyUI.receipt=null;renderPanel();if(innerWidth<=700||innerHeight<=550)document.querySelector('.diplomacy-atlas').scrollIntoView({block:'start'});break;
  case 'diplomacyInspect':diplomacyCountry=a.id;diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt='Review or rescind your pending orders below.';renderPanel();document.querySelector('.selected-country-strip').scrollIntoView({block:'center'});break;
  case 'diplomacyPolicy':diplomacyUI.policy=a.policy;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyAmount':diplomacyUI.amount=a.amount;diplomacyUI.receipt=null;renderPanel();break;
- case 'diplomacyRepeat':diplomacyUI.repeat=!diplomacyUI.repeat;renderPanel();break;
+ case 'diplomacyRepeat':diplomacyUI.repeat=!diplomacyUI.repeat;renderPanel();document.querySelector('.grant-repeat').focus({preventScroll:true});break;
  case 'diplomacyMapView':diplomacyUI.mapView=a.view;if(['information','grants'].includes(diplomacyUI.mode))diplomacyUI.mode='information';diplomacyUI.action=null;diplomacyUI.receipt=null;renderPanel();break;
  case 'diplomacyCancel':issue(a);diplomacyUI.receipt=a.type==='diplomaticGrant'?'Grant rescinded. Any reserved money was refunded.':'Diplomatic order rescinded.';renderPanel();break;
  case 'panel':openPanel(a.name);break;

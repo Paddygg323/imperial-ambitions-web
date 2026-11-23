@@ -153,3 +153,33 @@
  .diplomatic-dossier {position:static}
 }
 @media(prefers-reduced-motion:reduce){.menu-theme *{scroll-behavior:auto}}
+
+/* All six powers share one relation scale; stagger ties instead of hiding flags. */
+.relations-flags {position:relative;height:var(--chart-height);margin:0 13px}
+.relation-cluster {position:absolute;left:clamp(calc(var(--cluster-width)/2),var(--relation),calc(100% - var(--cluster-width)/2));bottom:var(--offset);width:var(--cluster-width);display:grid;grid-template-columns:repeat(auto-fit,28px);transform:translateX(-50%)}
+.relation-marker {display:block;width:26px;height:30px;margin:1px;outline-offset:2px}
+.relation-stem {position:absolute;bottom:0;width:1px;background:#846a3c99;pointer-events:none}
+.relation-marker .nation-emblem {width:26px;height:30px;margin:0;position:relative;z-index:1}
+.relation-marker:focus-visible {outline:2px solid #1883af}
+.diplomatic-dossier .power-relations .relation-spectrum {width:calc(100% - 26px);margin:0 13px;min-width:0}
+.relation-ends {display:flex;justify-content:space-between;font:11px Georgia;color:var(--menu-muted);margin:5px 0 0}
+.subsidy-icon {display:block;width:30px;height:30px;flex:none;filter:drop-shadow(0 1px 1px #442a1844)}
+.subsidy-terms {display:flex;align-items:center;gap:14px}
+.subsidy-terms>.subsidy-icon {width:66px;height:66px}
+.subsidy-terms .policy-palette {flex:1}
+.menu-theme .grant-repeat {display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;min-height:48px;margin:9px 0 0;padding:4px 0;background:none;border:0;box-shadow:none;color:var(--menu-ink);font-weight:bold}
+.grant-switch-track {display:block;position:relative;width:64px;height:34px;border:2px ridge #b88e47;border-radius:20px;background:#82725a;box-shadow:inset 0 2px 4px #36261655;flex:none}
+.grant-switch-thumb {position:absolute;left:2px;top:2px;width:26px;height:26px;border:1px solid #755329;border-radius:50%;background:radial-gradient(circle at 35% 25%,#fff1c8,#d5ad62);box-shadow:0 1px 3px #30200d66;transition:transform .15s ease}
+.grant-switch-word {position:absolute;right:5px;top:8px;font:600 10px Georgia;color:#fff4d6}
+.grant-repeat[aria-checked=true] .grant-switch-track {background:#32634f}
+.grant-repeat[aria-checked=true] .grant-switch-thumb {transform:translateX(30px)}
+.grant-repeat[aria-checked=true] .grant-switch-word {right:auto;left:7px}
+.grant-repeat-description {font:13px/1.4 Georgia;color:var(--menu-muted);margin:0 0 9px}
+.nation-exports {border-block:1px solid var(--menu-rule);padding:10px 0;margin:12px 0}
+.nation-exports h5 {font:600 15px Georgia;margin:0 0 9px}
+.nation-exports ul {list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nation-exports li {display:flex;align-items:center;gap:5px;min-width:0;font:12px/1.2 Georgia}
+.nation-exports .commodity-portrait {width:31px;height:31px;min-width:31px;flex:none;margin:0}
+.nation-exports p {font:11px/1.4 Georgia;color:var(--menu-muted);margin:7px 0 0}
+@media(max-width:700px){.subsidy-terms {gap:7px}.subsidy-terms>.subsidy-icon {width:48px;height:48px}.menu-enamel-tabs .subsidy-icon {width:25px;height:25px}}
+@media(prefers-reduced-motion:reduce){.grant-switch-thumb {transition:none}}
