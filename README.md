@@ -1,3 +1,3 @@
 # Imperial Ambitions web build
 
-Generated playable game only. Edit the main private project, not this deployment mirror.
+Generated playable game only. Edit Paddygg323/imperial-ambitions, not this deployment mirror.

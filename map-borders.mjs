@@ -16,20 +16,28 @@ export function provinceBorderEdges(tiles,index,visibleIds){
 }
 
 export function drawProvinceBorders(ctx,edges,screen,scale,ownershipColor){
- const atlas=scale<20,internal=[],national=[];
+ const groups=new Map(),national=[];
  for(const edge of edges){
   const a=screen(edge.tile),b=screen(edge.other),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
   const nx=dx/len,ny=dy/len,mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
   const segment={...edge,nx,ny,x1:mx-ny*scale*.2887,y1:my+nx*scale*.2887,x2:mx+ny*scale*.2887,y2:my-nx*scale*.2887};
-  (edge.national?national:internal).push(segment);
+  if(edge.national)national.push(segment);
+  else{
+   if(!groups.has(edge.tile.owner))groups.set(edge.tile.owner,[]);
+   groups.get(edge.tile.owner).push(segment);
+  }
  }
  const line=(e,offset=0)=>{ctx.moveTo(e.x1+e.nx*offset,e.y1+e.ny*offset);ctx.lineTo(e.x2+e.nx*offset,e.y2+e.ny*offset);};
  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
- // Screen-space widths keep provinces readable when viewing the whole nation.
- // The dark keyline separates the pale ink from bright fields and pale terrain.
- ctx.beginPath();for(const edge of internal)line(edge);
- ctx.strokeStyle=atlas?'#413a2bcc':'#263c29d9';ctx.lineWidth=atlas?1.8:2.8;ctx.stroke();
- ctx.strokeStyle=atlas?'#fff0cecc':'#fff1cfe8';ctx.lineWidth=atlas?.75:1.2;ctx.stroke();
+ // Owner-approved option 5: a translucent band around a crisp national-colour
+ // line. Stroke each owner's whole path together so junctions do not darken.
+ const width=scale<20?.65:1;
+ for(const [owner,segments] of groups){
+  const color=ownershipColor(owner);ctx.beginPath();for(const edge of segments)line(edge);
+  ctx.strokeStyle=color;ctx.lineWidth=14*width;ctx.globalAlpha=.30;ctx.stroke();
+  ctx.globalAlpha=1;ctx.strokeStyle='#242b20';ctx.lineWidth=4.8*width;ctx.stroke();
+  ctx.strokeStyle=color;ctx.lineWidth=2.8*width;ctx.stroke();
+ }
  // Country colours take priority at junctions, on their respective sides.
  const band=Math.max(.85,Math.min(3.5,scale*.065));
  for(const edge of national){
