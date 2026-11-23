@@ -164,7 +164,7 @@ export const SPRITES = {
     "kind": "feature"
   },
   "009": {
-    "file": "assets/reviewed/257-scrub.png",
+    "file": "assets/reviewed/258-scrub.png",
     "rect": [
       0,
       0,
