@@ -1,6 +1,6 @@
 import {diplomacyMap,countryName,independentNewWorld,envoyPortrait} from './diplomacy-map.mjs';
 import {atWar,diplomaticCountries,officeCost,TRADE_POLICIES} from './diplomacy.mjs';
-import {majorPowerRelations,nationExports,subsidyIcon} from './diplomacy-info.mjs';
+import {majorPowerRelations,nationExports,subsidyIcon,subsidyChoiceIcon} from './diplomacy-info.mjs';
 import {goodsPortrait} from './industry-art.mjs';
 import {nameOf} from './rules.mjs';
 import {canOfferMinorJoin} from './minor-join-offers.mjs';
@@ -66,7 +66,7 @@ export function diplomacyScreen(s,ui){
  for(const [key,label,icon] of [['treaties','Treaties','diplomacy'],['subsidies','Trade subsidies','trade'],['grants','Grants','reports'],['information','Information','help']])html+=btn((key==='subsidies'?subsidyIcon():royalIcon(icon))+`<span>${key==='information'?'Info':label}</span>`,'diplomacyMode',{mode:key},ui.mode===key);
  html+='</div><section class="diplomatic-scroll menu-paper"><p class="diplomacy-budget">'+'<span>'+esc(n.name)+' · '+s.year+'</span><span>Treasury <b>$'+n.cash.toLocaleString()+'</b></span><span>Available with credit <b>$'+spendableCash(n).toLocaleString()+'</b></span>'+'</p><div class="diplomacy-instruction"><h3>'+(ui.mode==='treaties'?'Treaties & overtures':ui.mode==='subsidies'?'Trade subsidies':ui.mode==='grants'?'Royal grants':'The diplomatic council')+'</h3>'+'</div>';
  if(ui.mode==='treaties'){if(ui.compact)html+='<details class="overture-picker" '+(ui.action?'':'open')+'><summary>'+esc(ui.action?labelFor(ui.action):'Choose a treaty')+'</summary>';html+='<div class="overture-palette">'+DIPLOMATIC_ACTIONS.map(([key,label,icon])=>btn(`<span class="menu-seal">${royalIcon(icon)}</span><span class="overture-label">${label}</span>${key==='consulate'?'<small>$500</small>':key==='embassy'?'<small>$1,000</small>':''}`,'diplomacyAction',{action:key},ui.action===key,!!s.pendingDiplomacy)).join('')+'</div>';if(ui.compact)html+='</details>';}
- if(ui.mode==='subsidies')html+='<div class="subsidy-terms">'+subsidyIcon()+'<div class="policy-palette">'+TRADE_POLICIES.map(policy=>btn(policy===300?'Boycott':policy===100?'Normal trade':`${100-policy}% subsidy`,'diplomacyPolicy',{policy},policy===ui.policy)).join('')+'</div></div><p class="diplomacy-explanation">Subsidies improve the recipient’s prices when buying from or selling to you. They cost money when trade takes place.</p>';
+ if(ui.mode==='subsidies')html+='<div class="subsidy-choices" aria-label="Trade terms">'+TRADE_POLICIES.map(policy=>`<button class="subsidy-choice" data-action="diplomacyPolicy" data-args='{"policy":${policy}}' aria-pressed="${policy===ui.policy}" aria-label="${policy===300?'Boycott':policy===100?'Normal trade':`${100-policy}% subsidy`}">${subsidyChoiceIcon(policy)}<span>${policy===300?'Boycott':policy===100?'Normal trade':`${100-policy}%`}</span></button>`).join('')+'</div><p class="diplomacy-explanation">Subsidies improve the recipient’s prices when buying from or selling to you. They cost money when trade takes place.</p>';
  if(ui.mode==='grants')html+='<div class="policy-palette">'+GRANT_AMOUNTS.map(amount=>btn('$'+amount.toLocaleString(),'diplomacyAmount',{amount},amount===ui.amount)).join('')+'</div>'+grantSwitch(ui.repeat)+'<p class="diplomacy-explanation">Requires an embassy in minor nations; Great Powers already have diplomatic contact. Money is reserved now and sent at turn end. Rescind before then for a refund.</p>';
  if(ui.action==='war'&&ui.mode==='treaties')html+='<p class="war-caution">Selecting a nation queues war for turn end. Breaking a non-aggression pact also harms your reputation.</p>';
  html+='<p class="diplomacy-guidance">'+esc(hint)+'</p><div class="diplomatic-feedback" role="status">'+esc(ui.receipt??(armed&&target!==s.player&&choice.reason?choice.reason:''))+'</div>';
@@ -92,16 +92,14 @@ function grantSwitch(repeat){
  return `<button class="grant-repeat" type="button" role="switch" aria-checked="${!!repeat}" aria-label="Recurring grant" aria-describedby="grant-repeat-description" data-action="diplomacyRepeat"><span class="grant-switch-track" aria-hidden="true"><span class="grant-switch-word">${repeat?'ON':'OFF'}</span><span class="grant-switch-thumb"></span></span><span>Recurring grant</span></button><p id="grant-repeat-description" class="grant-repeat-description">${repeat?'On — send this amount every turn until cancelled.':'Off — send this amount once.'}</p>`;
 }
 function relationsBar(s,target){
- const byValue=new Map();for(const n of majorPowerRelations(s,target)){const group=byValue.get(n.value)??[];group.push(n);byValue.set(n.value,group);}
- // Equal relations share a compact cluster. Nearby distinct values occupy
- // separate rows; stems still point to their exact position on the same bar.
- const lanes=[],groups=[...byValue].sort((a,b)=>a[0]-b[0]).map(([value,powers])=>{
-  const width=Math.min(3,powers.length)*28,height=Math.ceil(powers.length/3)*32,position=value/255*100,half=width/140*50,center=Math.max(half,Math.min(100-half,position)),start=center-half,end=center+half;
-  let lane=lanes.findIndex(l=>l.end+3<start);if(lane<0){lane=lanes.length;lanes.push({end:0,height:0});}lanes[lane].end=end;lanes[lane].height=Math.max(lanes[lane].height,height);
-  return {powers,width,height,position,lane};
+ // Move colliding shields vertically only. Every shield and stem retain the
+ // exact score on the shared horizontal scale, including ties and endpoints.
+ const lanes=[],powers=majorPowerRelations(s,target).sort((a,b)=>a.value-b.value).map(n=>{
+  let lane=lanes.findIndex(end=>n.position-end>=18/140*100);
+  if(lane<0)lane=lanes.length;lanes[lane]=n.position;
+  return {...n,offset:lane*20+5};
  });
- const offsets=lanes.map((_,i)=>lanes.slice(0,i).reduce((sum,l)=>sum+l.height+5,0)),height=lanes.reduce((sum,l)=>sum+l.height+5,0);
- return `<section class="diplomatic-relation power-relations" aria-label="Major powers’ relations with ${esc(countryName(s,target))}"><div class="relation-heading"><span>Relations</span><strong>Major powers</strong></div><div class="relations-flags" style="--chart-height:${height}px">${groups.map(g=>`<span class="relation-stem" aria-hidden="true" style="left:${g.position}%;height:${offsets[g.lane]+5}px"></span><span class="relation-cluster" style="--relation:${g.position}%;--cluster-width:${g.width}px;--offset:${offsets[g.lane]+5}px">${g.powers.map(n=>`<span class="relation-marker" role="img" tabindex="0" title="${esc(n.name)}: ${n.description}" aria-label="${esc(n.name)}: ${n.description} with ${esc(countryName(s,target))}" data-power="${n.id}">${nationEmblem(n.id,n.color)}</span>`).join('')}</span>`).join('')}</div><div class="relation-spectrum" aria-hidden="true"></div><div class="relation-ends"><span>Hostile</span><span>Warm</span></div></section>`;
+ return `<section class="diplomatic-relation power-relations" aria-label="Major powers’ relations with ${esc(countryName(s,target))}"><div class="relation-heading"><span>Relations</span><strong>Major powers</strong></div><div class="relations-flags" style="--chart-height:${lanes.length*20+3}px">${powers.map(n=>`<span class="relation-stem" aria-hidden="true" style="left:${n.position}%;height:${n.offset}px"></span><span class="relation-marker" role="img" tabindex="0" title="${esc(n.name)}: ${n.description}" aria-label="${esc(n.name)}: ${n.description} with ${esc(countryName(s,target))}" data-power="${n.id}" data-position="${n.position}" style="left:${n.position}%;bottom:${n.offset}px">${nationEmblem(n.id,n.color)}</span>`).join('')}</div><div class="relation-spectrum" aria-hidden="true"></div><div class="relation-ends"><span>Hostile</span><span>Warm</span></div></section>`;
 }
 function exportsPanel(s,target){
  const exports=nationExports(s,target),source={unknown:'Not yet known.',none:'No exports.',market:'Available in this market',production:'Connected export production',offers:'Current sale offers',recent:'Last turn’s exports'}[exports.source];
