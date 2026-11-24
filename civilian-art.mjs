@@ -1,10 +1,11 @@
 // Painted, grounded work cycles. Presentation only; no campaign timers or orders.
+import {WORK_FRAMES} from './civilian-frames.mjs';
 export const CIVILIAN_WORK = {
- builder: {offsets:[0,-9,-11,-3],sequence:[0,0,1,2,2,3],beat:180,bottom:655,top:80},
- engineer: {offsets:[0,1,1,0],sequence:[0,1,2,1,2,3,3],beat:230,bottom:665,top:95},
- explorer: {offsets:[0,-22,-22,-22],sequence:[0,1,2,2,3,3,2,1],beat:360,bottom:650,top:90},
- merchant: {offsets:[0,-1,-2,-1],sequence:[0,1,2,1,2,3,3,1],beat:270,bottom:673,top:40},
- spy: {offsets:[0,-9,-26,-33],sequence:[0,0,1,2,2,3],beat:450,bottom:688,top:48},
+ builder: {sequence:[0,0,1,2,3,3,4,5],beat:120},
+ engineer: {sequence:[0,1,2,3,4,4,5,0],beat:230},
+ explorer: {sequence:[0,1,2,2,3,3,4,5],beat:320},
+ merchant: {sequence:[0,1,2,3,4,5,5,4],beat:240},
+ spy: {sequence:[0,0,1,2,3,3,4,5],beat:330},
 };
 const images=new Map();
 let disposePortrait=()=>{};
@@ -19,13 +20,15 @@ function imageFor(role,onReady){
  if(onReady&&!im.complete)im.addEventListener('load',onReady,{once:true});
  return im;
 }
-export function loadCivilianArt(onReady){for(const role of Object.keys(CIVILIAN_WORK))imageFor(role,onReady);}
+export function loadCivilianArt(onReady){return Promise.all(Object.keys(CIVILIAN_WORK).map(role=>imageFor(role,onReady).decode()));}
 export function drawWorkingCivilian(ctx,type,x,baseline,height,time=0,reduced=false){
  const role=civilianRole(type),a=CIVILIAN_WORK[role],im=imageFor(role);
  if(!a||!im?.complete||!im.naturalWidth)return false;
- const frame=civilianFrame(role,time,reduced),cw=im.naturalWidth/4,sourceHeight=a.bottom-a.top,ratio=height/sourceHeight;
- // A fixed foot anchor per pose prevents whole-body skating between drawings.
- ctx.drawImage(im,frame*cw+a.offsets[frame],a.top,cw,sourceHeight,x-cw*ratio/2,baseline-height,cw*ratio,height);
+ const frame=WORK_FRAMES[role][civilianFrame(role,time,reduced)],referenceHeight=Math.max(...WORK_FRAMES[role].map(f=>f.rect[3])),ratio=height/referenceHeight;
+ const [sx,sy,sw,sh]=frame.rect,[ax,ay]=frame.anchor;
+ // All poses share one scale. The measured feet, not moving heads or hands,
+ // define the ground anchor; bending never stretches the character.
+ ctx.drawImage(im,sx,sy,sw,sh,x-ax*ratio,baseline-ay*ratio,sw*ratio,sh*ratio);
  return true;
 }
 export function workPortraitMarkup(c){return `<canvas class="civilian-work-portrait" width="320" height="320" data-work-role="${civilianRole(c.type)}" aria-hidden="true"></canvas>`;}

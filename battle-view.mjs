@@ -1,3 +1,4 @@
+import {battleVisualEvent,playBattleEffect} from './battle-effects.mjs';
 import {militaryPortrait,battleFormation} from './military-art.mjs';
 import {battleTerrainArt,battleWallArt,battleFortConnections} from './battle-art.mjs';
 import {ARMY,NATIONS,nameOf} from './rules.mjs';
@@ -11,7 +12,7 @@ const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 
 // Campaign-independent component. Caller owns persistence and outcome handling.
 export function mountBattle(root,{battle,player,onChange=()=>{},onFinish=()=>{},automated=false,nationColors={}}){
- let state=structuredClone(battle),selected=null,size=80,timer=null,disposed=false,finished=false,error='';
+ let state=structuredClone(battle),selected=null,size=80,timer=null,disposed=false,finished=false,error='',terrainVisible=false;
  const side=[state.attacker,state.defender].indexOf(player);
  if(side<0)throw Error('Player is not part of the battle');
  const enemy=side===0?state.defender:state.attacker;
@@ -20,9 +21,10 @@ export function mountBattle(root,{battle,player,onChange=()=>{},onFinish=()=>{},
  const editable=()=>!automated&&(state.phase==='deployment'?!state.ready[side]:state.phase==='combat'&&state.activeSide===side&&!state.retreating?.[side]);
  function dispatch(action,nation=player){
   if(disposed)return;
-  try{state=battleCommand(state,nation,action);error='';onChange(structuredClone(state));}
+  let visual=null;
+  try{const previous=state;state=battleCommand(state,nation,action);visual=battleVisualEvent(previous,state,action);error='';onChange(structuredClone(state));}
   catch(e){error=e.message;}
-  render();schedule();
+  render();playBattleEffect(root,visual);schedule();
  }
  function focus(tile){
   if(tile===null||tile===undefined)return;
@@ -56,16 +58,16 @@ export function mountBattle(root,{battle,player,onChange=()=>{},onFinish=()=>{},
    const terrain=state.cells[tile].terrain,cost=tacticalStepCost(unit??{type:'pikeman'},terrain);
    const terrainLabel=`${terrain===4?'Impassable':`Move ${cost/10}`}${[1,2].includes(terrain)?', cover for light infantry':''}`;
    const label=occupant?`${nameOf(occupant.owner)} ${nameOf(occupant.type)}, health ${occupant.hp}, morale ${occupant.effective}`:`${fortLabel||'Ground'}${bombard?', bombard here':''}${deploy.has(tile)?', deploy here':reachable.has(tile)?', reachable':''}`;
-   tiles+=`<button class="battle-tile terrain-${terrain} ${occupant?(isOwn?'friendly':'hostile'):''} ${occupant?.done?'spent':''} ${occupant?.state===1?'broken':''} ${selected===occupant?.id?'selected':''} ${deploy.has(tile)||reachable.has(tile)?'reachable':''} ${canAttack||bombard?'target':''} ${wall?(health?'wall':'breach'):''}" data-tile="${tile}" aria-label="${escape(label+', '+terrainLabel)}" style="left:${x*size+(y%2)*size/2}px;top:${y*size*.86}px;width:${size}px;height:${size}px;--ground-tone:${(tile*17%7)/100};--nation-color:${safeColor}"><svg class="battle-cell" viewBox="0 0 100 116" aria-hidden="true"><path d="M50 1 99 29 99 87 50 115 1 87 1 29Z"/></svg>${wall?battleWallArt({health,gate,level:state.fortification.level}):battleTerrainArt(terrain,tile)}${occupant?`${battleFormation(occupant.type)}<span class="battle-pennant" aria-hidden="true"></span><span class="unit-caption">${escape(abbreviation(occupant.type))}</span><i style="--health:${occupant.hp}%;--morale:${occupant.effective}%"></i>`:wall?`<span class="wall-label">${health?gate?'Gate':'Wall':'Breach'}</span><small>${health}</small>`:terrain===4?'×':terrain?`<small>${cost/10}${[1,2].includes(terrain)?' C':''}</small>`:''}</button>`;
+   tiles+=`<button class="battle-tile terrain-${terrain} ${occupant?(isOwn?'friendly':'hostile'):''} ${occupant?.done?'spent':''} ${occupant?.state===1?'broken':''} ${selected===occupant?.id?'selected':''} ${deploy.has(tile)||reachable.has(tile)?'reachable':''} ${canAttack||bombard?'target':''} ${wall?(health?'wall':'breach'):''}" data-tile="${tile}" aria-label="${escape(label+', '+terrainLabel)}" style="left:${x*size+(y%2)*size/2}px;top:${y*size*.86}px;width:${size}px;height:${size}px;--ground-tone:${(tile*17%7)/100};--nation-color:${safeColor}"><svg class="battle-cell" viewBox="0 0 100 116" aria-hidden="true"><path d="M50 1 99 29 99 87 50 115 1 87 1 29Z"/></svg>${wall?battleWallArt({health,gate,level:state.fortification.level,tower:[1,13].includes(y)}):battleTerrainArt(terrain,tile)}${occupant?`${battleFormation(occupant.type)}<span class="battle-pennant" aria-hidden="true"></span><span class="unit-caption">${escape(abbreviation(occupant.type))}</span><i style="--health:${occupant.hp}%;--morale:${occupant.effective}%"></i>`:wall?`<span class="wall-label">${health?gate?'Gate':'Wall':'Breach'}</span><small>${health}</small>`:terrain===4?'×':terrain?`<small>${cost/10}${[1,2].includes(terrain)?' C':''}</small>`:''}</button>`;
   }
   root.innerHTML=`<header><strong>${escape(title)}</strong><span>${escape(nameOf(player))} · ${own.filter(u=>u.tile!==null&&!u.emplaced).length} deployed / ${state.limits[side]}</span></header>
    ${result?`<section class="battle-result" aria-label="Battle result">${state.outcomeReason==='timeLimit'?'<p>Time has run out. The defender holds the province.</p>':''}${Object.entries(result.armies).map(([nation,army])=>`<p>${escape(nameOf(nation))}: ${army.survivors.length} surviving, ${army.losses.length} lost</p>`).join('')}${result.fortBefore?`<p>Fort: level ${result.fortBefore} to ${result.fortAfter}${result.fortReduced?' (reduced)':' (unchanged)'}</p>`:''}</section>`:''}
-   <div class="battle-tools"><button data-do="overview">Overview</button><button data-do="focus">Selected</button><button data-do="zoom">${size<48?'Local view':'Zoom out'}</button></div>
-   <div class="battle-viewport" aria-label="Battlefield; drag to pan"><div class="battle-board ${size<48?'overview':'local'}" style="width:${(state.activeWidth+.5)*size}px;height:${state.height*size*.86+size}px">${battleFortConnections(state,size)}${tiles}</div></div>
-   <div class="battle-detail" aria-live="polite">${unit?`<strong>${escape(nameOf(unit.type))} · ${escape(nameOf(unit.owner))}</strong><p>Health ${unit.hp} · Morale ${unit.effective} · ${unit.state===1?'Broken':unit.escaped?'Escaped':unit.surrendered?'Surrendered':unit.state===3?'Destroyed':unit.tile===null?'Reserve':unit.done?'Done':`Move ${unit.moveLeft??ARMY[unit.type].move} · ${unit.fireReady?'Shot ready':'Fired'}`}</p><p>Ranged ${ARMY[unit.type].firepower} · Melee ${ARMY[unit.type].melee} · Range ${regimentRange(unit)}${unit.emplaced?' · Emplaced (immobile)':''}</p>`:'Select a regiment below, then tap a highlighted tile.'}</div>
+   <div class="battle-tools"><button data-do="overview">Overview</button><button data-do="focus">Selected</button><button data-do="zoom">${size<48?'Local view':'Zoom out'}</button><button data-do="terrain" aria-pressed="${terrainVisible}">Terrain</button></div>
+   <div class="battle-viewport" aria-label="Battlefield; drag to pan"><div class="battle-board ${size<48?'overview':'local'} ${terrainVisible?'show-terrain':''}" style="width:${(state.activeWidth+.5)*size}px;height:${state.height*size*.86+size}px">${battleFortConnections(state,size)}${tiles}</div></div>
+   <div class="battle-command"><div class="battle-detail" aria-live="polite">${unit?`<strong>${escape(nameOf(unit.type))} · ${escape(nameOf(unit.owner))}</strong><div class="battle-condition"><span>Health <b>${unit.hp}</b><i style="--value:${unit.hp}%"></i></span><span>Morale <b>${unit.effective}</b><i style="--value:${unit.effective}%"></i></span></div><p>${unit.state===1?'Broken':unit.escaped?'Escaped':unit.surrendered?'Surrendered':unit.state===3?'Destroyed':unit.tile===null?'Reserve':unit.done?'Done':`Move ${unit.moveLeft??ARMY[unit.type].move} · ${unit.fireReady?'Shot ready':'Fired'}`}</p><p>Ranged ${ARMY[unit.type].firepower} · Melee ${ARMY[unit.type].melee} · Range ${regimentRange(unit)}${unit.emplaced?' · Emplaced (immobile)':''}</p>`:'Select a regiment below, then tap a highlighted tile.'}</div>
    <div class="battle-roster" aria-label="Your regiments">${own.map(u=>`<button data-unit="${escape(u.id)}" aria-pressed="${u.id===selected}">${militaryPortrait(u.type)}${escape(nameOf(u.type))}<small>${u.escaped?'Escaped':u.state===3?'Lost':u.tile===null?'Reserve':u.state===1?'Broken':u.done?'Done':u.hp+' health'}</small></button>`).join('')}</div>
    <div class="battle-actions">${state.phase==='deployment'?`<button data-do="undeploy" ${!editable()||!mine||unit?.emplaced||unit?.tile===null?'disabled':''}>Undeploy</button><button data-do="ready" ${!editable()||!own.some(u=>u.tile!==null)?'disabled':''}>Ready</button>`:state.phase==='combat'?`<button data-do="done" ${!canAct?'disabled':''}>Done</button><button data-do="rally" ${!canAct||unit.type!=='general'?'disabled':''}>Rally</button><button data-do="endTurn" ${!editable()?'disabled':''}>End turn</button><button data-do="retreat" ${!editable()?'disabled':''}>Retreat army</button>`:''}</div>
-   <p class="battle-hint">${size<48?'Overview: tap a tile to zoom in.':editable()?'Tile numbers show movement cost; C marks light-infantry cover. Drag to pan. Tap blue tiles to move; outlined enemies to attack, or outlined walls to bombard.':state.retreating?.[side]?'Your army is retreating; troops must reach the exit.':'Opponent is taking its turn.'}</p><p class="battle-error" role="alert">${escape(error)}</p>`;
+   <p class="battle-hint">${size<48?'Overview: tap a tile to zoom in.':editable()?'Drag to pan. Tap highlighted ground to move, outlined enemies to attack, or outlined walls to bombard. Terrain shows movement costs and cover.':state.retreating?.[side]?'Your army is retreating; troops must reach the exit.':'Opponent is taking its turn.'}</p><p class="battle-error" role="alert">${escape(error)}</p></div>`;
   if(scroll)Object.assign(root.querySelector('.battle-viewport'),{scrollLeft:scroll.left,scrollTop:scroll.top});
   if(state.phase==='finished'&&!finished){finished=true;onFinish(structuredClone(state));}
  }
@@ -85,6 +87,7 @@ export function mountBattle(root,{battle,player,onChange=()=>{},onFinish=()=>{},
    return;
   }
   const action=button.dataset.do;
+  if(action==='terrain'){terrainVisible=!terrainVisible;render();return;}
   if(action==='zoom'||action==='overview'){size=action==='overview'?20:size<48?80:20;render();focus(state.units.find(u=>u.id===selected)?.tile??state.width*8+Math.floor(state.activeWidth/2));return;}
   if(action==='focus'){size=80;render();focus(state.units.find(u=>u.id===selected)?.tile);return;}
   if(['ready','endTurn','retreat'].includes(action))dispatch({type:action});

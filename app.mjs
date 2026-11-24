@@ -486,6 +486,9 @@ if('serviceWorker'in navigator&&!new URLSearchParams(location.search).has('nativ
 
 
 document.addEventListener('keydown',e=>{const target=e.target.closest('[data-action=diplomacyInspect],.atlas-country');if(target&&(e.key==='Enter'||e.key===' ')){e.preventDefault();target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
+await Promise.all([map.ready,document.fonts.ready]);
+map.draw();
+await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 window.dispatchEvent(new Event('game-ready'));
 
 document.addEventListener('input',e=>{if(e.target.id==='researchSearch'){const position=e.target.selectionStart;researchQuery=e.target.value;renderPanel();const input=$('researchSearch');input.focus();input.setSelectionRange(position,position);}});

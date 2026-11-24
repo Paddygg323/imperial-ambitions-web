@@ -12,7 +12,7 @@
  var retry = document.createElement('button');retry.textContent = 'Try again';retry.hidden = true;retry.onclick = function () {location.reload();};box.appendChild(retry);
  document.body.appendChild(box);
  function fail(text) {if (ready) return;failed = true;title.textContent = 'The game could not open';message.textContent = text + ' Your saved campaign has not been replaced.';retry.hidden = false;box.setAttribute('role','alert');}
- window.addEventListener('game-ready',function () {ready = true;box.remove();});
+ window.addEventListener('game-ready',function () {ready = true;document.documentElement.removeAttribute('data-loading');box.remove();});
  window.addEventListener('error',function () {fail('A required game file could not load. Close and reopen the game; if this continues, update the app without uninstalling it or clearing its data.');});
  window.addEventListener('unhandledrejection',function () {fail('Opening the campaign was interrupted. Try again.');});
  if (!supported) {fail('Update Android System WebView and Chrome through Google Play, or use an up-to-date browser. This version needs newer browser features.');return;}

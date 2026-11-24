@@ -1,3 +1,4 @@
+import {createLandscapeSurfaces} from './landscape-surfaces.mjs';
 import {loadCivilianArt,drawWorkingCivilian,civilianIsWorking,civilianFrame} from './civilian-art.mjs';
 import {createReviewedSprites,reviewedSpriteKey,ownsResourceArtwork,ownsDevelopmentArtwork} from './reviewed-sprites.mjs';
 import {drawRoadNetwork} from './landscape-detail.mjs';
@@ -36,15 +37,16 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  const sites=new Image();sites.src=new URL('./assets/resource-sites.png',import.meta.url).href;sites.onload=()=>draw();
  const development=new Image();development.src=new URL('./assets/development.png',import.meta.url).href;development.onload=()=>draw();
  const resources=new Image();resources.src=new URL('./assets/resources.png',import.meta.url).href;resources.onload=()=>draw();
- loadCivilianArt(()=>draw());
+ const civilianReady=loadCivilianArt(()=>draw());
  const art=new Image();art.src=new URL('./assets/atlas.png',import.meta.url).href;art.onload=()=>draw();
+
  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');let animationFrame=0,lastAnimation=0,visibleWorkers=[],lastWorkSignature='';
  const workSignature=time=>visibleWorkers.map(c=>civilianFrame(c.type,time+c.offset)).join(',');
  function animate(time){animationFrame=0;if(!canvas.isConnected||!visibleWorkers.length||document.hidden||reducedMotion.matches||document.querySelector('#panel')?.open)return;if(time-lastAnimation>=90&&workSignature(time)!==lastWorkSignature){lastAnimation=time;draw();}else animationFrame=requestAnimationFrame(animate);}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&canvas.isConnected)draw();});
  reducedMotion.addEventListener('change',()=>draw());
  document.querySelector('#panel')?.addEventListener('close',()=>draw());
- const ctx=canvas.getContext('2d');let scale=52,cx=80,cy=23,selected=null,w=0,h=0,civilianHits=[],armyHits=[],fleetHits=[],seaOrderHits=[];let hoverTile=null,hoverPoint=null,attackHits=[];
+ const ctx=canvas.getContext('2d');const landscape=createLandscapeSurfaces(ctx,()=>draw());let scale=52,cx=80,cy=23,selected=null,w=0,h=0,civilianHits=[],armyHits=[],fleetHits=[],seaOrderHits=[];let hoverTile=null,hoverPoint=null,attackHits=[];
  const point=t=>({x:t.x+(t.y%2)*.5,y:t.y*.866});
  const screen=t=>{const p=point(t);return {x:(p.x-cx)*scale+w/2,y:(p.y-cy)*scale+h/2};};
  const mini=createMiniAtlas(document.getElementById('minimap'),getState,(x,y)=>{cx=x;cy=y;draw();});
@@ -55,12 +57,13 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  function fitNation(){const s=getState();fitTiles(s.tiles.filter(t=>t.owner===s.player));}
  function zoomAt(f,x=w/2,y=h/2){const old=scale,next=Math.max(2,Math.min(110,scale*f));cx+=(x-w/2)*(1/old-1/next);cy+=(y-h/2)*(1/old-1/next);scale=next;draw();}
  function hex(x,y,r){ctx.beginPath();for(let i=0;i<6;i++){const a=(i*60-30)*Math.PI/180;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();}
- function sprite(index,x,y,width,height=width){if(!art.complete||!art.naturalWidth)return false;const col=index%6,row=Math.floor(index/6);ctx.save();ctx.filter='saturate(1.26) contrast(1.07)';ctx.drawImage(art,col*256,row?595:115,256,row?320:355,x-width/2,y-height,width,height);ctx.restore();return true;}
+ function sprite(index,x,y,width,height=width){if(!art.complete||!art.naturalWidth)return false;const col=index%6,row=Math.floor(index/6);ctx.save();ctx.filter='saturate(1.02) contrast(1.02)';ctx.drawImage(art,col*256,row?595:115,256,row?320:355,x-width/2,y-height,width,height);ctx.restore();return true;}
  function resourceSprite(resource,x,y,factor=1){
+  if(landscape.drawRiches(resource,x,y,scale*factor))return true;
   if(resource==='meat'||resource==='grain')return drawRural(ctx,ruralArt,resource==='meat'?0:1,x,y,scale*factor);
   const natural=({grain:0,cotton:1,sugarCane:2,tobacco:3,spices:4,furs:5,iron:6,tin:6,copper:7,coal:8,gold:6,silver:6,gems:6,diamonds:6})[resource];
-  if(natural!==undefined&&sites.complete&&sites.naturalWidth){const cw=sites.naturalWidth/3,ch=sites.naturalHeight/3,size=scale*.83*factor;ctx.save();ctx.filter='saturate(1.20) contrast(1.06)';ctx.drawImage(sites,natural%3*cw,Math.floor(natural/3)*ch,cw,ch,x-size/2,y-size*.43,size,size);ctx.restore();return true;}
-  const index=({meat:0,wool:1,horses:2,cotton:3,sugarCane:4,tobacco:5,spices:6,furs:7,iron:8,tin:8,copper:9,coal:10,fish:11})[resource];if(index===undefined||!resources.complete||!resources.naturalWidth)return false;const plant=['sugarCane','tobacco'].includes(resource),width=scale*(plant?.76:.78),height=scale*(plant?.70:.69);ctx.save();ctx.filter='saturate(1.26) contrast(1.07)';ctx.drawImage(resources,index%6*256,index<6?100:590,256,index<6?360:340,x-width/2,y-height*.42,width,height);ctx.restore();return true;}
+  if(natural!==undefined&&sites.complete&&sites.naturalWidth){const cw=sites.naturalWidth/3,ch=sites.naturalHeight/3,size=scale*.83*factor;ctx.save();ctx.filter='saturate(1.02) contrast(1.02)';ctx.drawImage(sites,natural%3*cw,Math.floor(natural/3)*ch,cw,ch,x-size/2,y-size*.43,size,size);ctx.restore();return true;}
+  const index=({meat:0,wool:1,horses:2,cotton:3,sugarCane:4,tobacco:5,spices:6,furs:7,iron:8,tin:8,copper:9,coal:10,fish:11})[resource];if(index===undefined||!resources.complete||!resources.naturalWidth)return false;const plant=['sugarCane','tobacco'].includes(resource),width=scale*(plant?.76:.78),height=scale*(plant?.70:.69);ctx.save();ctx.filter='saturate(1.02) contrast(1.02)';ctx.drawImage(resources,index%6*256,index<6?100:590,256,index<6?360:340,x-width/2,y-height*.42,width,height);ctx.restore();return true;}
  function detail(t,x,y,s,ix){
   const keyArt=reviewedSpriteKey(t,prospected(s,s.player,t)?t.resource:null);
   if(reviewed.tiles.has(keyArt)){if(keyArt==='001-default'||reviewed.isFeature(keyArt))return;ctx.save();hex(x,y,scale*.579);ctx.clip();if(keyArt.startsWith('019-level'))reviewed.draw(ctx,'005',x,y,scale);reviewed.draw(ctx,keyArt,x,y,scale);ctx.restore();return;}
@@ -79,7 +82,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   cy=halfY>26?25.5:Math.max(halfY-.6,Math.min(52.2-halfY,cy));
  }
  function draw(){
-  civilianHits=[];armyHits=[];fleetHits=[];seaOrderHits=[];attackHits=[];if(!w||!h)return;constrainCamera();const s=getState(),ix=new Map(s.tiles.map(t=>[t.id,t])),seaLabels=[],hoverTarget=planningFleet()&&hoverTile?fleetTarget(hoverTile):null;ctx.clearRect(0,0,w,h);const labels=labelPlacer(w,h);labels.reserve({x:w-Math.min(w-16,330),y:0,w:Math.min(w-16,330),h:55});const ocean=ctx.createLinearGradient(0,0,w,h);ocean.addColorStop(0,'#1e6894');ocean.addColorStop(1,'#103e66');const atlas=scale<20,waves=(reviewedSea??=reviewed.seaPattern(ctx))??paintedSea??seaSurface(ctx);waves.setTransform(new DOMMatrix().translate(w/2-cx*scale,h/2-cy*scale).scale(Math.max(.4,scale/75)*(reviewedSea?1:paintedSea?420/oceanArt.naturalWidth:1)));const seaPaint=atlas?'#d1bd8c':waves;ctx.fillStyle=atlas?'#d4bf8f':'#1e343d';ctx.fillRect(0,0,w,h);const chart=screen({x:0,y:0});ctx.fillStyle=atlas?'#a99d7f':'#657f85';ctx.fillRect(chart.x-scale*.6,chart.y-scale*.6,109*scale,61*.866*scale);
+  civilianHits=[];armyHits=[];fleetHits=[];seaOrderHits=[];attackHits=[];if(!w||!h)return;constrainCamera();const s=getState(),ix=new Map(s.tiles.map(t=>[t.id,t])),seaLabels=[],hoverTarget=planningFleet()&&hoverTile?fleetTarget(hoverTile):null;ctx.clearRect(0,0,w,h);const labels=labelPlacer(w,h);labels.reserve({x:w-Math.min(w-16,330),y:0,w:Math.min(w-16,330),h:55});const ocean=ctx.createLinearGradient(0,0,w,h);ocean.addColorStop(0,'#1e6894');ocean.addColorStop(1,'#103e66');const atlas=scale<20,waves=landscape.patterns.sea??(reviewedSea??=reviewed.seaPattern(ctx))??paintedSea??seaSurface(ctx);waves.setTransform(new DOMMatrix().translate(w/2-cx*scale,h/2-cy*scale).scale(Math.max(.4,scale/75)*(landscape.patterns.sea?.8:reviewedSea?1:paintedSea?420/oceanArt.naturalWidth:1)));const seaPaint=atlas?'#d1bd8c':waves;ctx.fillStyle=atlas?'#d4bf8f':'#1e343d';ctx.fillRect(0,0,w,h);const chart=screen({x:0,y:0});ctx.fillStyle=atlas?'#a99d7f':'#657f85';ctx.fillRect(chart.x-scale*.6,chart.y-scale*.6,109*scale,61*.866*scale);
   if(s.seas){
    // Unknown sea and hidden land share the ocean background; only surveyed sea is overlaid.
    const seen=new Set(s.nations[s.player].seenSea??[]),knowledge=seaKnowledge(s),reachable=new Map(reachableSeas().map(m=>[m.zone,m.distance]));
@@ -105,7 +108,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   const transform=new DOMMatrix([scale,0,0,scale,w/2-cx*scale,h/2-cy*scale]),landShape=new Path2D(),shoreShape=new Path2D();landShape.addPath(shoreCache.land,transform);shoreShape.addPath(shoreCache.shore,transform);
   ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#52899350';ctx.lineWidth=Math.max(1,scale*.13);ctx.stroke(shoreShape);ctx.strokeStyle='#9eac8c90';ctx.lineWidth=Math.max(.7,scale*.055);ctx.stroke(shoreShape);ctx.restore();
   ctx.save();ctx.clip(landShape,'evenodd');
-  const grass=atlas?null:(reviewedGrass??=reviewed.grassPattern(ctx));
+  const grass=atlas?null:(landscape.patterns.grass??(reviewedGrass??=reviewed.grassPattern(ctx)));
   if(grass){grass.setTransform(new DOMMatrix().translate(w/2-cx*scale,h/2-cy*scale).scale(scale*1.1/256));ctx.fillStyle=grass;ctx.fillRect(0,0,w,h);}
   for(const t of s.tiles){const {x,y}=screen(t);if(x< -scale||y< -scale||x>w+scale||y>h+scale)continue;
    if(!visible(s,s.player,t))continue;
@@ -113,7 +116,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    const nation=s.nations[t.owner];if(atlas){ctx.globalAlpha=.8;ctx.fillStyle=nation?.alive===false?'#a29d8f':nation?.color??'#c9c3a5';ctx.fill();ctx.globalAlpha=1;}
 
   }
-  if(!atlas){ctx.fillStyle=scale<45?'#9b9e7052':'#9b9e7033';ctx.fillRect(0,0,w,h);}
+  if(!atlas){ctx.fillStyle=scale<45?'#909c6f28':'#909c6f0c';ctx.fillRect(0,0,w,h);}
   // Complete the ground before transport and silhouettes, so neighbouring
   // terrain patches never erase a road or the foot of a town.
   for(const t of s.tiles){if(!visible(s,s.player,t))continue;const {x,y}=screen(t);
@@ -179,7 +182,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    const index=({builder:0,engineer:1,explorer:2,merchant:3,spy:4,railBuilder:1})[c.type]??0;
    ctx.fillStyle='#10231b70';ctx.beginPath();ctx.ellipse(dx,y+5,10,3.5,0,0,Math.PI*2);ctx.fill();
    civilianHits.push({id:c.id,tile:c.tile,x:dx,y:y-18});
-   const working=civilianIsWorking(c),height=Math.min(58,scale*.84);
+   const working=civilianIsWorking(c),height=Math.min(50,scale*.68);
    if(working)visibleWorkers.push({type:c.type,offset:i*197});
    if(!working||!drawWorkingCivilian(ctx,c.type,dx,y+8,height,performance.now()+i*197,reducedMotion.matches))sprite(index,dx,y+8,Math.min(40,scale*.57),height);
    ctx.save();ctx.fillStyle=c.sleep?'#79877c':working?'#b38a42':'#adc391';ctx.strokeStyle='#34443b';ctx.lineWidth=1;ctx.beginPath();ctx.arc(dx+11,y-34,4,0,Math.PI*2);ctx.fill();ctx.stroke();if(working){ctx.strokeStyle='#fff0bd';ctx.beginPath();ctx.moveTo(dx+9,y-34);ctx.lineTo(dx+11,y-32);ctx.lineTo(dx+14,y-36);ctx.stroke();}ctx.restore();
@@ -249,7 +252,8 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);dragged=true;});
  canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt(e.deltaY>0?.9:1.1,e.clientX-r.left,e.clientY-r.top);},{passive:false});
  new ResizeObserver(resize).observe(canvas);
- return {viewport:()=>({scale,cx,cy,width:w,height:h}),draw,focus,fit,fitNation,focusSea(id,zoom=12){const z=getState().seas?.zones.find(z=>z.id===id);if(!z)return;const [x,y]=z.center.split(',').map(Number),p=point({x,y});cx=p.x;cy=p.y;scale=zoom;selected=id;draw();},select(id){selected=id;draw();},zoom(f){zoomAt(f);}};
+ const ready=Promise.all([reviewed.ready,landscape.ready,civilianReady,...[desert,groundArt,ruralArt,townArt,biomes,oceanArt,paper,troops,overseasDevelopment,sites,development,resources,art].map(im=>im.decode())]).then(()=>{if(reviewed.errors.length)throw Error(reviewed.errors.join('; '));resize();draw();});
+ return {ready,viewport:()=>({scale,cx,cy,width:w,height:h}),draw,focus,fit,fitNation,focusSea(id,zoom=12){const z=getState().seas?.zones.find(z=>z.id===id);if(!z)return;const [x,y]=z.center.split(',').map(Number),p=point({x,y});cx=p.x;cy=p.y;scale=zoom;selected=id;draw();},select(id){selected=id;draw();},zoom(f){zoomAt(f);}};
 }
 
 

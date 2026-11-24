@@ -66,7 +66,10 @@ export function featureFrame(data,width,height){
 export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,blend,perimeter}={}){
  const [sx,sy,sw,sh]=rect,c=document.createElement('canvas');c.width=sw;c.height=sh;
  const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,sx,sy,sw,sh,0,0,sw,sh);
- if(kind==='feature'){c.featureFrame=featureFrame(ctx.getImageData(0,0,sw,sh).data,sw,sh);return c;}
+ if(kind==='feature'){
+  const data=ctx.getImageData(0,0,sw,sh);harmonizeFoliage(data.data);ctx.putImageData(data,0,0);
+  c.featureFrame=featureFrame(data.data,sw,sh);return c;
+ }
  if(kind==='overlay'||kind==='texture')return c;
  const pixels=ctx.getImageData(0,0,sw,sh).data;let l=sw,r=0,top=sh,b=0;
  for(let y=3;y<sh-3;y++)for(let x=3;x<sw-3;x++){
@@ -80,9 +83,28 @@ export function prepareReviewedSprite(image,rect,{kind='terrain',feather=.09,ble
  const data=g.getImageData(0,0,256,296);
  for(let y=0;y<296;y++)for(let x=0;x<256;x++){
   const u=Math.abs((x+.5)/128-1),v=Math.abs((y+.5)/148-1),edge=Math.max(u,u*.5+v);
-  data.data[(y*256+x)*4+3]*=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):(blend==='contained'?containedSpriteAlpha((x+.5)/128-1,(y+.5)/148-1,perimeter):landBlendAlpha((x+.5)/128-1,(y+.5)/148-1));
+  const k=(y*256+x)*4,R=data.data[k],G=data.data[k+1],B=data.data[k+2],grass=G>R*1.04&&G>B*1.6;
+  let alpha=kind==='sea'?Math.max(0,Math.min(1,(.965-edge)/feather)):(blend==='contained'?containedSpriteAlpha((x+.5)/128-1,(y+.5)/148-1,perimeter):landBlendAlpha((x+.5)/128-1,(y+.5)/148-1));
+  // Feather only the grassy presentation base on resource tiles. Crops,
+  // livestock and buildings keep their full silhouettes at the perimeter.
+  if(kind!=='sea'&&blend==='contained'){
+   if(grass)alpha*=Math.max(0,Math.min(.75,(.88-edge)/.3));
+   if(edge>.78&&R<35&&G<35&&B<30)alpha=0;
+  }
+  data.data[k+3]*=alpha;
  }
+ if(kind!=='sea')harmonizeFoliage(data.data);
  g.putImageData(data,0,0);return tile;
+}
+// One restrained grass/leaf palette across approved sheets. This is a runtime
+// colour grade; the original source drawings and their subject shapes remain.
+function harmonizeFoliage(data){
+ for(let k=0;k<data.length;k+=4){
+  const r=data[k],g=data[k+1],b=data[k+2];
+  if(g<=r*1.04||g<=b*1.6)continue;
+  const light=(r*.27+g*.65+b*.08)/150,shade=.45+light*.53;
+  data[k]=Math.min(255,122*shade);data[k+1]=Math.min(255,139*shade);data[k+2]=Math.min(255,71*shade);
+ }
 }
 export function createReviewedSprites(onReady){
  const images=new Map(),tiles=new Map(),errors=[];
