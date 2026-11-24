@@ -1,3 +1,4 @@
+import {civilianIsWorking,workPortraitMarkup,mountWorkPortrait,stopWorkPortrait} from './civilian-art.mjs';
 import {goodsPortrait} from './industry-art.mjs';
 import {militaryPortrait} from './military-art.mjs';
 import {CONSTRUCTION,nameOf} from './rules.mjs';
@@ -32,9 +33,10 @@ export function decorateRoyalUI(){
 }
 function goodsLine(goods,n){return Object.entries(goods).map(([g,q])=>`<span class="cost-good ${n.stock[g]<q?'cost-short':''}" title="${nameOf(g)}: ${q}">${goodsPortrait(g)}<b>${q}</b><small>${nameOf(g)}</small></span>`).join('');}
 export function renderCabinet(s,{civilian,armySelection,fleetSelection,selected,fleetPlanning,armyPlanning}){
+ stopWorkPortrait();
  const n=s.nations[s.player],u=s.civilians.find(c=>c.id===civilian),tile=s.tiles.find(t=>t.id===selected),army=s.armies.find(a=>armySelection.includes(a.id));
  const title=u?nameOf(u.type):fleetPlanning?'Admiralty':armyPlanning||army?'Field command':'Royal command';
- const portrait=u?`<span class="civilian-portrait" style="--portrait:${({builder:0,engineer:1,explorer:2,merchant:3,spy:4,railBuilder:1})[u.type]??0}"></span>`:fleetPlanning?'<span class="ship-portrait"></span>':army?militaryPortrait(army.type):'<span class="capital-portrait"></span>';
+ const portrait=civilianIsWorking(u)?workPortraitMarkup(u):u?`<span class="civilian-portrait" style="--portrait:${({builder:0,engineer:1,explorer:2,merchant:3,spy:4,railBuilder:1})[u.type]??0}"></span>`:fleetPlanning?'<span class="ship-portrait"></span>':army?militaryPortrait(army.type):'<span class="capital-portrait"></span>';
  const available=productionBudget(n).stock;
  let costs=[];
  if(u?.type==='engineer')costs=[['Road',19],['Port',21],['Fort I',22],['Fort II',23],['Fort III',24]];
@@ -42,4 +44,5 @@ export function renderCabinet(s,{civilian,armySelection,fleetSelection,selected,
  if(u?.type==='railBuilder')costs=[['Railway',20]];
  document.getElementById('commandTitle').textContent=u?`Give ${nameOf(u.type)} Orders`:fleetPlanning?'Give Fleet Orders':armyPlanning?'Give Army Orders':'The Royal Council';
  document.getElementById('cabinetPortrait').innerHTML=`<h2>${title}</h2><div class="cabinet-shortcuts">${['civilians','army','navy','transport'].map(k=>`<button data-action="panel" data-args='{"name":"${k}"}' aria-label="${nameOf(k)}" title="${nameOf(k)}">${royalIcon(k)}</button>`).join('')}</div><div class="portrait-stage">${portrait}<span>${u?(u.order?'Working · '+nameOf(u.order.job):u.sleep?'Resting':'Awaiting orders'):fleetPlanning?fleetSelection.length+' ships selected':army?armySelection.length+' regiments selected':n.name}</span></div><button class="mobile-materials" data-action="panel" data-args='{"name":"materials"}'>Materials & costs</button><details class="cabinet-resources" open><summary>Available materials</summary><div class="cabinet-stock">${['lumber','castIron','bronze','steel'].map(g=>`<span title="${nameOf(g)}">${goodsPortrait(g)}<b>${available[g]??0}</b><small>${nameOf(g)}</small></span>`).join('')}</div>${costs.length?`<h3>Construction costs</h3><div class="cost-ledger">${costs.map(([label,i])=>`<div><span>${label}</span>${goodsLine(CONSTRUCTION[i].goods,n)}</div>`).join('')}</div><small>Costs per improvement. Technology, terrain and location requirements still apply.</small>`:''}</details>`;
+ if(civilianIsWorking(u))mountWorkPortrait(document.querySelector('#cabinetPortrait .civilian-work-portrait'),u);
 }

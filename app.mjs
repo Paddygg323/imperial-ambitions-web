@@ -1,3 +1,4 @@
+import {nationEmblem} from './heraldry.mjs';
 import {researchScreen} from './research-screen.mjs';
 import {diplomacyScreen,diplomaticChoice} from './diplomacy-screen.mjs';
 import {powerRankings} from './power-rankings.mjs';
@@ -48,7 +49,7 @@ import {visible,prospected,neighbourIds} from './world.mjs';
 import {fleetMoves,shipSea,blockadeTarget} from './navy.mjs';
 import {createMap} from './map.mjs';
 const $=id=>document.getElementById(id), esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=createGame({transportModel:'ports'}),selected=null,civilian=null,fleetSelection=[],armySelection=[],currentPanel=null,industryTab='production',researchView='available',researchCategory='Show all',researchQuery='',messageTimer;
+let state=createGame({transportModel:'ports'}),selected=null,civilian=null,fleetSelection=[],armySelection=[],currentPanel=null,industryTab='production',researchView='available',researchCategory='Show all',researchQuery='',researchLeaf='catalogue',messageTimer;
 const storage=campaignStorage(localStorage,window.AndroidGame),storedCampaign=readStoredCampaign(storage,SAVE,loadGame);
 if(storedCampaign.state)state=storedCampaign.state;
 const nation=()=>state.nations[state.player];
@@ -225,7 +226,7 @@ function renderSelection(){
  }else html+='<div class="actions">'+button('Choose civilian','panel',{name:'civilians'})+button('Tile register','panel',{name:'tiles'})+'</div>';
  $('selection').innerHTML=html;
 }
-function foreignKnowledge(tech){const sources=technologySources(state,nation(),tech);if(!sources.length)return '';return `<button class="knowledge-flags" data-action="knowledgeFlags" data-args='${JSON.stringify({tech})}' aria-label="Identify countries that know this technology">`+sources.map(n=>`<span class="knowledge-flag" role="img" aria-label="${esc(n.name)}${n.spy?' · spy assistance':''}" style="--flag:${state.nations[n.id].color}">${n.spy?'<sup>s</sup>':''}</span>`).join('')+'</button>'; }
+function foreignKnowledge(tech){const sources=technologySources(state,nation(),tech);if(!sources.length)return '';return `<button class="knowledge-flags" data-action="knowledgeFlags" data-args='${JSON.stringify({tech})}' aria-label="Identify countries that know this technology">`+sources.map(n=>`<span class="knowledge-flag" role="img" aria-label="${esc(n.name)}${n.spy?' · spy assistance':''}" style="--flag:${state.nations[n.id].color}">${nationEmblem(n.id,state.nations[n.id].color)}${n.spy?'<sup>s</sup>':''}</span>`).join('')+'</button>'; }
 
 
 function openPanel(name){if(name==='diplomacy'&&currentPanel!=='diplomacy'){diplomacyUI.action=null;diplomacyUI.mode='treaties';diplomacyUI.receipt=null;}fleetPlanning=false;if(name==='army'||name==='navy')civilian=null;currentPanel=name;renderPanel();if(!$('panel').open)$('panel').showModal();}
@@ -357,7 +358,7 @@ function renderPanel(){
   html+=`<h3>Supplies reaching your capital</h3><p>One home port serves your capital. Other ports collect supplies for shipment home. Figures below are this turn’s planned deliveries.</p><table><thead><tr><th>Source</th><th>Resource</th><th>${net.nativePorts?'Connected / arriving':'Made / arriving'}</th></tr></thead><tbody>`+net.rows.filter(r=>r.produced).map(r=>{const tile=state.tiles.find(t=>t.id===r.tile),province=state.provinces.find(p=>p.id===tile?.province),label=r.tile===n.capital?'Capital network':(province?.name??'Supply source')+(net.nativePorts?' port':'');return `<tr><td>${button(label,'focusTile',{id:r.tile})}</td><td>${nameOf(r.good)}<br><small>${esc(r.reason??r.mode)}</small></td><td>${r.produced} / ${r.delivered}</td></tr>`;}).join('')+'</tbody></table>';
   html+='</details>';
  }else if(currentPanel==='research'){
-  html=researchScreen(state,{view:researchView,group:researchCategory,query:researchQuery},{foreignKnowledge,fundingPanel:researchFundingPanel});
+  html=researchScreen(state,{view:researchView,group:researchCategory,query:researchQuery,leaf:researchLeaf},{foreignKnowledge,fundingPanel:researchFundingPanel});
  }else if(currentPanel==='reports'){
   const news=relevantNews(state);html=button('Power rankings','panel',{name:'rankings'})+`<h3>News from around the world · ${state.year}</h3>`+researchWarning();
   for(const warning of strengthWarnings(state)){const names=warning.rivals.map(id=>esc(countryName(state,id))).join(', ');html+=`<section class="news-item news-urgent"><b>${warning.domain==='military'?'Military':'Naval'} strength warning</b><p>${warning.own===0?`${names} ${warning.rivals.length===1?'has':'have'} ${warning.domain==='military'?'an army':'warships'} while you have none.`:`${names}: estimated ${warning.domain} strength is more than twice yours.`}</p></section>`;}
@@ -456,9 +457,10 @@ document.addEventListener('click',e=>{if(pointerStartedOnMap&&e.detail>0){pointe
  case 'recruitUnit':issue({type:'recruitUnit',...a});break;
  case 'knowledgeFlags':toast('Known abroad: '+technologySources(state,nation(),a.tech).map(n=>n.name+(n.spy?' (spy assisting)':'')).join(', '));break;
  case 'toggleProjects':researchProjectsExpanded=!researchProjectsExpanded;renderPanel();break;
- case 'researchView':researchView=a.view;researchQuery='';researchCategory='Show all';renderPanel();break;
+ case 'researchLeaf':researchLeaf=a.leaf;renderPanel();document.querySelector('#panel').scrollTop=0;break;
+ case 'researchView':researchLeaf='catalogue';researchView=a.view;researchQuery='';researchCategory='Show all';renderPanel();break;
  case 'researchCategory':researchCategory=a.group;renderPanel();break;
- case 'startResearch':researchProjectsExpanded=true;issue({type:'researchStart',tech:a.tech});break;
+ case 'startResearch':researchLeaf='projects';researchProjectsExpanded=true;issue({type:'researchStart',tech:a.tech});break;
  case 'fund':issue({type:'researchFunding',...a});break;
  case 'goal':issue({type:'researchGoal',tech:a.tech});break;
  case 'cancelResearch':if(confirm('Cancel this project and lose its investment?'))issue({type:'researchCancel',tech:a.tech});break;

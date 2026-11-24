@@ -1,3 +1,4 @@
+import {loadCivilianArt,drawWorkingCivilian,civilianIsWorking,civilianFrame} from './civilian-art.mjs';
 import {createReviewedSprites,reviewedSpriteKey,ownsResourceArtwork,ownsDevelopmentArtwork} from './reviewed-sprites.mjs';
 import {drawRoadNetwork} from './landscape-detail.mjs';
 import {drawFortifiedTown,drawRural} from './map-art249.mjs';
@@ -11,7 +12,7 @@ import {pendingAttackGroups} from './map-orders.mjs';
 import {MILITARY_ATLAS,drawMilitarySprite} from './military-art.mjs';
 import {seaKnowledge} from './sea-knowledge.mjs';
 import {drawCultivation,drawDevelopment} from './development-art.mjs';
-import {fleetAnchor,fleetDisplayLocation,seaName,drawTent,drawCivilianWork} from './map-markers.mjs';
+import {fleetAnchor,fleetDisplayLocation,seaName,drawTent} from './map-markers.mjs';
 import {terrainPixels} from './terrain-blend.mjs';
 import {TERRAIN_RESOURCE} from './rules.mjs';
 import {riverDirections,riverNeighbor} from './river-routes.mjs';
@@ -35,10 +36,14 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  const sites=new Image();sites.src=new URL('./assets/resource-sites.png',import.meta.url).href;sites.onload=()=>draw();
  const development=new Image();development.src=new URL('./assets/development.png',import.meta.url).href;development.onload=()=>draw();
  const resources=new Image();resources.src=new URL('./assets/resources.png',import.meta.url).href;resources.onload=()=>draw();
+ loadCivilianArt(()=>draw());
  const art=new Image();art.src=new URL('./assets/atlas.png',import.meta.url).href;art.onload=()=>draw();
- const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');let animationFrame=0,lastAnimation=0;
- function animate(time){animationFrame=0;if(!canvas.isConnected||document.hidden||reducedMotion.matches)return;if(time-lastAnimation>=90){lastAnimation=time;draw();}else animationFrame=requestAnimationFrame(animate);}
+ const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');let animationFrame=0,lastAnimation=0,visibleWorkers=[],lastWorkSignature='';
+ const workSignature=time=>visibleWorkers.map(c=>civilianFrame(c.type,time+c.offset)).join(',');
+ function animate(time){animationFrame=0;if(!canvas.isConnected||!visibleWorkers.length||document.hidden||reducedMotion.matches||document.querySelector('#panel')?.open)return;if(time-lastAnimation>=90&&workSignature(time)!==lastWorkSignature){lastAnimation=time;draw();}else animationFrame=requestAnimationFrame(animate);}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&canvas.isConnected)draw();});
+ reducedMotion.addEventListener('change',()=>draw());
+ document.querySelector('#panel')?.addEventListener('close',()=>draw());
  const ctx=canvas.getContext('2d');let scale=52,cx=80,cy=23,selected=null,w=0,h=0,civilianHits=[],armyHits=[],fleetHits=[],seaOrderHits=[];let hoverTile=null,hoverPoint=null,attackHits=[];
  const point=t=>({x:t.x+(t.y%2)*.5,y:t.y*.866});
  const screen=t=>{const p=point(t);return {x:(p.x-cx)*scale+w/2,y:(p.y-cy)*scale+h/2};};
@@ -167,14 +172,16 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   ctx.restore();
   const unchartedSea=s.seas?.cellZones['28,28'],unchartedLand=ix.get('28,28');
   if(!(unchartedSea&&(s.nations[s.player].seenSea??[]).includes(unchartedSea))&&!(unchartedLand&&visible(s,s.player,unchartedLand))){const p=screen({x:28,y:28});ctx.save();ctx.fillStyle='#43594f';ctx.font='italic 14px Georgia';ctx.textAlign='center';ctx.fillText('Unexplored',p.x,p.y);ctx.restore();}
+  visibleWorkers=[];
   if(scale>=20)for(const c of s.civilians.filter(c=>c.owner===s.player)){const t=ix.get(c.tile);if(!t)continue;const {x,y}=screen(t),group=s.civilians.filter(u=>u.owner===s.player&&u.tile===c.tile),i=group.findIndex(u=>u.id===c.id),dx=x+(i-(group.length-1)/2)*22;
+   if(dx< -60||dx>w+60||y< -60||y>h+80)continue;
    if(c.id===selectedCivilian())selectionRing(ctx,dx,y-12,Math.min(23,scale*.45),Math.min(27,scale*.50));
    const index=({builder:0,engineer:1,explorer:2,merchant:3,spy:4,railBuilder:1})[c.type]??0;
    ctx.fillStyle='#10231b70';ctx.beginPath();ctx.ellipse(dx,y+5,10,3.5,0,0,Math.PI*2);ctx.fill();
    civilianHits.push({id:c.id,tile:c.tile,x:dx,y:y-18});
-   const working=!!c.order&&!['wait'].includes(c.order.job),phase=performance.now()/230+i,step=working&&!reducedMotion.matches?Math.sin(phase):0;
-   ctx.save();ctx.translate(dx,y+8);ctx.rotate(step*(working?.045:0));sprite(index,0,-Math.abs(step)*1.6,Math.min(40,scale*.57),Math.min(58,scale*.84));ctx.restore();
-   if(working&&c.order.job!=='move')drawCivilianWork(ctx,c.type,dx,y,reducedMotion.matches?0:phase,scale);
+   const working=civilianIsWorking(c),height=Math.min(58,scale*.84);
+   if(working)visibleWorkers.push({type:c.type,offset:i*197});
+   if(!working||!drawWorkingCivilian(ctx,c.type,dx,y+8,height,performance.now()+i*197,reducedMotion.matches))sprite(index,dx,y+8,Math.min(40,scale*.57),height);
    ctx.save();ctx.fillStyle=c.sleep?'#79877c':working?'#b38a42':'#adc391';ctx.strokeStyle='#34443b';ctx.lineWidth=1;ctx.beginPath();ctx.arc(dx+11,y-34,4,0,Math.PI*2);ctx.fill();ctx.stroke();if(working){ctx.strokeStyle='#fff0bd';ctx.beginPath();ctx.moveTo(dx+9,y-34);ctx.lineTo(dx+11,y-32);ctx.lineTo(dx+14,y-36);ctx.stroke();}ctx.restore();
   }
   for(const group of pendingAttackGroups(s)){
@@ -231,7 +238,8 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   if(planningFleet()&&hoverTile&&hoverPoint){const target=hoverTarget;if(target){ctx.save();ctx.font='12px Georgia';const text=target.label,width=Math.min(w-16,ctx.measureText(text).width+20),x=Math.max(8,Math.min(w-width-8,hoverPoint.x+14)),y=Math.max(24,hoverPoint.y-18);ctx.fillStyle='#203e40';ctx.fillRect(x,y-18,width,28);ctx.strokeStyle=target.valid?'#e7d79a':'#ce9279';ctx.strokeRect(x,y-18,width,28);ctx.fillStyle='#fff0cd';ctx.textAlign='left';ctx.fillText(text,x+10,y,width-20);ctx.restore();}}
   if(atlas){ctx.save();ctx.globalAlpha=.15;if(paper.complete&&paper.naturalWidth)ctx.drawImage(paper,paper.naturalWidth*.3,paper.naturalHeight*.3,paper.naturalWidth*.4,paper.naturalHeight*.4,0,0,w,h);ctx.strokeStyle='#70532b35';ctx.lineWidth=.6;for(let x=-h;x<w+h;x+=100){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke();ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x-h,h);ctx.stroke();}ctx.restore();atlasCompass(ctx,w,h);ctx.save();ctx.font='bold 15px Georgia';ctx.textAlign='center';for(const n of Object.values(s.nations)){const ts=s.tiles.filter(t=>t.owner===n.id&&visible(s,s.player,t));if(!ts.length)continue;const ps=ts.map(screen),x=ps.reduce((v,p)=>v+p.x,0)/ps.length,y=ps.reduce((v,p)=>v+p.y,0)/ps.length;if(!labels.place(x,y,ctx.measureText(n.name).width+8,20))continue;ctx.strokeStyle='#382516';ctx.lineWidth=3;ctx.strokeText(n.name,x,y);ctx.fillStyle='#fff0cc';ctx.fillText(n.name,x,y);}ctx.restore();}
   mini.draw({scale,cx,cy,width:w,height:h});
-  if(!animationFrame&&!document.hidden&&!reducedMotion.matches&&((scale>=20&&s.civilians.some(c=>c.owner===s.player&&c.order&&c.order.job!=='wait'))))animationFrame=requestAnimationFrame(animate);
+  lastWorkSignature=workSignature(performance.now());
+  if(!animationFrame&&!document.hidden&&!document.querySelector('#panel')?.open&&!reducedMotion.matches&&visibleWorkers.length)animationFrame=requestAnimationFrame(animate);
  }
  let pointers=new Map(),dragged=false,start=null,pinch=0;
  canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});start={x:e.clientX,y:e.clientY};dragged=false;if(pointers.size===2){const [a,b]=[...pointers.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
