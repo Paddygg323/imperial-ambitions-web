@@ -81,7 +81,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    for(const z of s.seas.zones){
     const known=knowledge.known.has(z.id),frontier=knowledge.frontier.has(z.id);if(!known&&!frontier)continue;
     for(const id of z.cells){const [tx,ty]=id.split(',').map(Number);if(tx<60&&!seen.has(z.id)&&!frontier)continue;const p=screen({x:tx,y:ty});if(p.x< -scale||p.y< -scale||p.x>w+scale||p.y>h+scale)continue;
-     hex(p.x,p.y,scale*.605);ctx.fillStyle=frontier?(atlas?'#a99d7f':'#657f85'):seaPaint;ctx.fill();if(!atlas&&!frontier){ctx.globalAlpha=1-seaTextureStrength(scale);ctx.fillStyle='#28628a';ctx.fill();ctx.globalAlpha=1;}if(z.id===selected){hex(p.x,p.y,scale*.58);ctx.fillStyle='#99bab118';ctx.fill();}
+     hex(p.x,p.y,scale*.605);ctx.fillStyle=frontier?(atlas?'#a99d7f':'#657f85'):seaPaint;ctx.fill();if(!atlas&&!frontier){ctx.globalAlpha=1-seaTextureStrength(scale);ctx.fillStyle='#305a74';ctx.fill();ctx.globalAlpha=1;}if(z.id===selected){hex(p.x,p.y,scale*.58);ctx.fillStyle='#99bab118';ctx.fill();}
      for(let d=0;scale>=10&&d<6;d++){const nid=riverNeighbor({x:tx,y:ty},d),other=s.seas.cellZones[nid];if(!other||other===z.id)continue;const [nx,ny]=nid.split(',').map(Number),q=screen({x:nx,y:ny}),dx=q.x-p.x,dy=q.y-p.y,len=Math.hypot(dx,dy),mx=(p.x+q.x)/2,my=(p.y+q.y)/2;
       ctx.beginPath();ctx.moveTo(mx-dy/len*scale*.288,my+dx/len*scale*.288);ctx.lineTo(mx+dy/len*scale*.288,my-dx/len*scale*.288);ctx.strokeStyle=frontier&&reachable.has(z.id)?'#e7d79a99':'#ccdbcf35';ctx.lineWidth=frontier&&reachable.has(z.id)?1.4:.8;ctx.stroke();}
     }
@@ -98,7 +98,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   const visibleIds=new Set(s.tiles.filter(t=>visible(s,s.player,t)).map(t=>t.id)),shoreKey=[...visibleIds].join('|');
   if(!shoreCache||shoreCache.key!==shoreKey){const geometry=coastlineGeometry(s.tiles,visibleIds);shoreCache={key:shoreKey,land:new Path2D(geometry.land),shore:new Path2D(geometry.shore)};}
   const transform=new DOMMatrix([scale,0,0,scale,w/2-cx*scale,h/2-cy*scale]),landShape=new Path2D(),shoreShape=new Path2D();landShape.addPath(shoreCache.land,transform);shoreShape.addPath(shoreCache.shore,transform);
-  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#429cbd70';ctx.lineWidth=Math.max(1,scale*.20);ctx.stroke(shoreShape);ctx.strokeStyle='#a3d2c0a0';ctx.lineWidth=Math.max(.7,scale*.09);ctx.stroke(shoreShape);ctx.restore();
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#52899350';ctx.lineWidth=Math.max(1,scale*.13);ctx.stroke(shoreShape);ctx.strokeStyle='#9eac8c90';ctx.lineWidth=Math.max(.7,scale*.055);ctx.stroke(shoreShape);ctx.restore();
   ctx.save();ctx.clip(landShape,'evenodd');
   const grass=atlas?null:(reviewedGrass??=reviewed.grassPattern(ctx));
   if(grass){grass.setTransform(new DOMMatrix().translate(w/2-cx*scale,h/2-cy*scale).scale(scale*1.1/256));ctx.fillStyle=grass;ctx.fillRect(0,0,w,h);}
@@ -108,6 +108,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    const nation=s.nations[t.owner];if(atlas){ctx.globalAlpha=.8;ctx.fillStyle=nation?.alive===false?'#a29d8f':nation?.color??'#c9c3a5';ctx.fill();ctx.globalAlpha=1;}
 
   }
+  if(!atlas){ctx.fillStyle=scale<45?'#9b9e7052':'#9b9e7033';ctx.fillRect(0,0,w,h);}
   // Complete the ground before transport and silhouettes, so neighbouring
   // terrain patches never erase a road or the foot of a town.
   for(const t of s.tiles){if(!visible(s,s.player,t))continue;const {x,y}=screen(t);
@@ -143,7 +144,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
     // Mineral silhouettes are easily confused with ordinary rocky terrain.
     // Label only known deposits; never reveal an unprospected mineral.
     const mineralName=({iron:'Iron',copper:'Copper',tin:'Tin',coal:'Coal',gold:'Gold',silver:'Silver',gems:'Gems',diamonds:'Diamonds'})[resource];
-    if(mineralName&&scale>=35){ctx.save();ctx.font='bold 10px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='#e6ddbd';ctx.fillStyle='#273b3b';ctx.strokeText(mineralName,x+scale*.12,y+scale*.36);ctx.fillText(mineralName,x+scale*.12,y+scale*.36);ctx.restore();}
+    if(mineralName&&scale>=35){ctx.save();ctx.font='600 11px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='#f2e7cbd9';ctx.fillStyle='#273b3b';ctx.strokeText(mineralName,x+scale*.12,y+scale*.36);ctx.fillText(mineralName,x+scale*.12,y+scale*.36);ctx.restore();}
     if(t.port){ctx.fillStyle='#234e6a';ctx.font='16px Georgia';ctx.fillText('⚓\uFE0E',x+scale*.28,y-scale*.25);}
     if(t.purchasedBy&&s.nations[t.purchasedBy]){const fx=x+scale*.25,fy=y+2;ctx.strokeStyle='#352f24';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx,fy+13);ctx.stroke();ctx.fillStyle=s.nations[t.purchasedBy].color;ctx.fillRect(fx,fy,9,6);ctx.strokeRect(fx,fy,9,6);}
    }
@@ -191,7 +192,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
    // Fine centre line suggests a drawn tactical advance, without lettering.
    const tail=at(-size*.66,0),tip=at(size*.65,0);ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(tip.x,tip.y);ctx.strokeStyle='#e4bc8566';ctx.lineWidth=1;ctx.stroke();
    if(scale>=26)drawMilitarySprite(ctx,troops,group.units[0].type,mid.x,mid.y-size+7,27);
-   if(scale>=26){ctx.font='bold 10px Georgia';ctx.textAlign='center';ctx.fillStyle='#e9dfbf';ctx.strokeStyle='#394036';ctx.lineWidth=2;ctx.strokeText(group.units.length,mid.x,mid.y+size*.78);ctx.fillText(group.units.length,mid.x,mid.y+size*.78);}
+   if(scale>=26){ctx.font='600 11px Georgia';ctx.textAlign='center';ctx.fillStyle='#e9dfbf';ctx.strokeStyle='#394036';ctx.lineWidth=2;ctx.strokeText(group.units.length,mid.x,mid.y+size*.78);ctx.fillText(group.units.length,mid.x,mid.y+size*.78);}
    ctx.restore();attackHits.push({points:outline,mid,units:group.units.map(u=>u.id)});
   }
   // One selectable figure per friendly garrison; never reveal enemy rosters.

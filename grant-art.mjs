@@ -1,0 +1,15 @@
+// Illustrated grant denominations. Pure presentation; no campaign state.
+export function grantArt(amount){
+ const id='grant-'+amount,coin=(x,y)=>`<g stroke="#795023" stroke-width=".7"><path d="M${x-5} ${y}v2a5 2 0 0 0 10 0v-2" fill="#b88332"/><ellipse cx="${x}" cy="${y}" rx="5" ry="2" fill="url(#${id}-gold)"/></g>`;
+ let art;
+ if(amount<5000){
+  const purse=(x,y,scale)=>`<g transform="translate(${x} ${y}) scale(${scale})"><path d="m-8-17 4 9c-10 7-14 18-9 25 4 6 23 7 28 0 5-7 0-18-10-25l4-9-7 2-4-3-6 3Z" fill="url(#${id}-leather)" stroke="#5e391b" stroke-width="1.6"/><path d="M-5-7h10m-9 1-4 19m13-18 5 17" fill="none" stroke="#e8ba66" stroke-width="1.6"/><path d="m-6-8 4 2 9-2" fill="none" stroke="#ffe6a5" stroke-width="2"/><circle cx="1" cy="8" r="5" fill="#9c4629" stroke="#f1cb7a"/><path d="m-2 8 2 2 4-5" fill="none" stroke="#f6dd99"/></g>`;
+  art=amount===1000?purse(34,35,.9)+coin(48,53):purse(45,32,.7)+purse(29,39,.9)+coin(48,54)+coin(54,51);
+ }else{
+  art=`<g stroke="#64401f" stroke-width="1.2" stroke-linejoin="round"><path d="m14 33 14-9 31 8-12 10Z" fill="#ae7940"/><path d="m14 33 33 9v19l-33-9Z" fill="url(#${id}-wood)"/><path d="m47 42 12-10v19l-12 10Z" fill="#6a3e24"/><path d="m20 35 5 1v19l-5-1Zm19 5 4 1v19l-4-1Z" fill="url(#${id}-gold)"/><path d="m14 43 33 9m-33-4 33 9" opacity=".4"/>`;
+  art+=amount===5000?`<path d="M14 33v-7q16-13 33 1v15Z" fill="url(#${id}-wood)"/><path d="m47 27 12-9v14L47 42Z" fill="#6a3e24"/><path d="m14 26 14-9q16-7 31 1l-12 9q-17-13-33-1Z" fill="#b68b51"/><path d="M20 23v12l5 1V22m14 2v16l4 1V25" fill="none" stroke="#d9b064" stroke-width="3"/>`:`<path d="m15 29-4-15 14-8 30 9 4 15-12 5Z" fill="url(#${id}-wood)"/><path d="m15 29 32 6 12-5-31-8Z" fill="#312a20"/><path d="m17 12 4 14m20-8 4 14" stroke="#e0b966" stroke-width="3"/>`;
+  art+=`<path d="m31 41 6 2v8l-6-2Z" fill="#e1bc6c"/><circle cx="34" cy="46" r="1" fill="#47371f"/></g>`;
+  if(amount===10000)art+=coin(24,31)+coin(36,33)+coin(45,34)+coin(31,30)+coin(39,30)+coin(52,59)+coin(58,56);
+ }
+ return `<svg class="grant-art" viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="${id}-gold" x2=".5" y2="1"><stop stop-color="#ffedb1"/><stop offset=".5" stop-color="#d6a24c"/><stop offset="1" stop-color="#8d5f2c"/></linearGradient><linearGradient id="${id}-leather" x2="1" y2=".6"><stop stop-color="#edc176"/><stop offset=".45" stop-color="#bb853b"/><stop offset="1" stop-color="#7b4f27"/></linearGradient><linearGradient id="${id}-wood" x2="0" y2="1"><stop stop-color="#bf8649"/><stop offset="1" stop-color="#794624"/></linearGradient></defs><circle class="selection-ring" cx="36" cy="36" r="35" fill="none" stroke="#e2b65f" stroke-width="2"/><circle cx="36" cy="36" r="32" fill="#0d3544" stroke="url(#${id}-gold)" stroke-width="3"/><circle cx="36" cy="36" r="28" fill="none" stroke="#a88549" stroke-width=".6" stroke-dasharray="1 3"/>${art}<g class="selected-tick"><circle cx="60" cy="59" r="8" fill="#f0d08b" stroke="#63451e"/><path d="m56 59 3 3 5-6" stroke="#543d20" fill="none" stroke-width="2"/></g></svg>`;
+}

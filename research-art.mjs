@@ -1,7 +1,16 @@
 import {goodsPortrait} from './industry-art.mjs';
 import {militaryPortrait} from './military-art.mjs';
+import {RECIPES,SHIPS} from './rules.mjs';
+import {battleWallArt} from './battle-art.mjs';
 // Reuse the game's painted assets; illustrations identify a topic, not an unlock.
 export function researchArt(t){
+ const effect=t.effects?.[0];
+ if(effect?.kind==='fort')return battleWallArt({health:100,gate:true,level:effect.level});
+ if(effect?.kind==='development')return goodsPortrait(effect.resource);
+ if(effect?.kind==='recipe')return goodsPortrait(RECIPES[effect.recipe]?.output??effect.recipe);
+ if(effect?.kind==='worker')return goodsPortrait(effect.worker);
+ if(effect?.kind==='unit')return SHIPS[effect.unit]?'<span class="ship-portrait" aria-hidden="true"></span>':militaryPortrait(effect.unit);
+ if(effect?.kind==='civilian')return `<span class="civilian-portrait" aria-hidden="true" style="--portrait:${effect.unit==='merchant'?3:1}"></span>`;
  const name=t.name.toLowerCase();
  if(/ship|hull|sail|navigation|convoy|sea route|riverboat|paddlewheel|privateer/.test(name))return '<span class="ship-portrait" aria-hidden="true"></span>';
  if(/artillery|siege|fortification/.test(name))return militaryPortrait('horseArtillery');

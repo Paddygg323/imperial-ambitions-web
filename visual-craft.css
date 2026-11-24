@@ -1,0 +1,419 @@
+/* Royal atlas: one quiet vellum surface, enamel instruments, painted subjects.
+   Presentation only. Keep order handlers, rules and saved campaign data separate. */
+:root {
+  --craft-ink:#302d25; --craft-muted:#675c45; --craft-rule:#a28b5c66;
+  --craft-paper:#f2e7c9; --craft-navy:#102e40; --craft-gold:#c59a51;
+  --craft-vellum:linear-gradient(#f4ecd7b3,#efe3c8b3),url('assets/royal-vellum.png');
+  --craft-enamel:linear-gradient(#102e40eb,#102e40eb),url('assets/royal-brocade.png');
+}
+body {font-size:14px;line-height:1.5}
+button,input,select {font-size:14px;line-height:1.3}
+button {transition:background-color .12s,border-color .12s}
+button:hover {filter:none}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible {outline:3px solid #27708b;outline-offset:3px}
+button:disabled {opacity:.55}
+button .royal-icon {flex-shrink:0}
+#app>header,#commandCabinet,.cabinet-tools,#cabinetPortrait h2 {background-image:var(--craft-enamel);background-size:400px}
+#app>header h1 {font-size:26px;font-weight:600;letter-spacing:0}
+#commandTitle {font-size:22px;font-weight:normal}
+#summary {background:#e8dbb8;border-bottom:1px solid #8e7449;gap:16px;line-height:1.4}
+#navigation {background:var(--craft-enamel);border-color:#a68248;box-shadow:none}
+#navigation:before,#navigation:after {display:none}
+#navigation button {background:#173849;border:1px solid #bca06c66;color:#eadcbb;box-shadow:none;font-size:12px;gap:4px}
+#navigation button .royal-icon {color:#dec58d;filter:none}
+#navigation button:hover {background:#254c60;border-color:#d1b16d}
+#navigation #endTurn {background:#d5b46f;color:#2f291e;border-color:#efce84}
+#navigation #endTurn .royal-icon {color:inherit;filter:none}
+.map-controls {gap:4px}
+.map-controls button {background:#102e40ed;border:1px solid #c4a46a;box-shadow:0 1px 3px #10212e44;min-width:44px;min-height:44px}
+.mini-frame {background:var(--craft-enamel)}
+.mini-caption {font-size:11px;color:#e0d3af}
+#selection {background:var(--craft-vellum);background-size:640px;color:var(--craft-ink);border:1px solid #a38a56}
+#selection p {font-size:13px;line-height:1.5}
+#selection>b {font-size:19px;font-weight:600}
+#selection button,.mobile-materials {background:#f1e2bb;color:var(--craft-ink);border:1px solid #9b8151;box-shadow:inset 0 1px #fff5dc}
+#unitQueue {background:#102e40;border-color:#ad8d51}
+#unitQueue button {color:#ecdfbf;border:1px solid #bfa16977;min-height:44px;font-size:12px;background:transparent}
+.portrait-stage {background:none}
+.cabinet-resources {background:var(--craft-enamel)}
+.cabinet-resources .cost-ledger {font-size:12px}
+.cabinet-resources h3 {font-weight:normal;letter-spacing:0}
+.map-caption {background:#102e40d9;border-color:#cfb47555;font-size:11px;padding:4px 8px}
+
+/* Ornamental frames belong to the outer page; its ledger rows need breathing room. */
+#panel {border:3px solid #ba985b;box-shadow:0 0 0 1px #1b2022,0 0 0 4px #d7bd85,0 16px 48px #06182280;color:var(--craft-ink);background:var(--craft-paper)}
+#panel::backdrop {background:#071c2cb3}
+#panel {scrollbar-width:auto;scrollbar-color:#8d7446 #e5d4af;scrollbar-gutter:stable}
+#panel::-webkit-scrollbar {width:12px}
+#panel::-webkit-scrollbar-track {background:#e5d4af}
+#panel::-webkit-scrollbar-thumb {background:#8d7446;border:3px solid #e5d4af}
+@media(min-width:850px){
+ #panel[data-view=navy] {height:fit-content;max-height:94dvh}
+ #panel[data-view=navy] #panelBody {min-height:0}
+}
+#panel .dialog-head {min-height:68px;padding:4px 12px;border-width:9px;border-image-width:15px;background-image:var(--craft-enamel);background-size:400px}
+#panel .dialog-head h2 {font-size:26px;font-weight:600;line-height:1.2}
+#panel .dialog-head h2:before {border:1px solid #c3a46a;width:36px;height:36px;font-size:22px}
+#panel .dialog-head button {min-width:44px;min-height:44px;border:1px solid #d7b976;background:#153a4d;box-shadow:none;font:22px Georgia;color:#f3dfb4}
+#panel #panelBody {background:var(--craft-vellum) center/640px;padding:20px 24px 28px;min-height:calc(100% - 68px);font:14px/1.5 Georgia,serif;overflow-wrap:break-word}
+#panelBody p {line-height:1.55}
+#panelBody h3 {font-size:20px;font-weight:600;color:#403423;margin:16px 0 12px}
+#panelBody small,#panelBody .muted {color:var(--craft-muted);font-size:12px;line-height:1.5}
+#panelBody button {min-height:44px;border:1px solid #9f8656;border-radius:2px;background:#efe0b8;box-shadow:inset 0 1px #fff6dd;color:#352e20;font:14px/1.25 Georgia,serif;padding:8px 12px}
+#panelBody button:hover:not(:disabled) {background:#f9edcd;border-color:#70562d}
+#panelBody button[aria-pressed=true],#panelBody button.selected {background:#173e50;color:#fff0cb;border-color:#98773a;box-shadow:inset 0 -3px #d1b16b}
+#panelBody input:not([type=range]),#panelBody select {background:#fff8e5;border:1px solid #a38d65;border-radius:2px;min-height:44px;font-size:14px;color:var(--craft-ink);padding:8px}
+#panelBody summary {min-height:44px;padding:10px 0;font:13px/1.5 Georgia;color:#574a30}
+#panelBody details[open]>summary {border-bottom:1px solid var(--craft-rule);margin-bottom:8px}
+#panelBody .row,#panelBody .card,#panelBody .workshop,#panelBody .recruit-card,#panelBody .research-project {
+  background:#fffbef55;border:1px solid var(--craft-rule);border-left:1px solid var(--craft-rule);border-radius:2px;box-shadow:none;padding:16px;margin:12px 0;
+}
+#panelBody .row {gap:16px}
+#panelBody .tabs {gap:8px;padding-bottom:12px;margin:0 0 16px;border-bottom:1px solid #a08654}
+#panelBody .tabs button {flex:1}
+#panelBody .actions {gap:8px;margin-top:12px}
+#panelBody .numbers {gap:0;border:1px solid #aa946b;border-radius:2px;width:max-content;max-width:100%;background:#fff4d9;overflow:hidden}
+#panelBody .numbers button {border:0;border-radius:0;min-width:44px;min-height:44px;box-shadow:none;background:#ead9ae;font:21px Georgia;padding:6px 12px}
+#panelBody .numbers b {font:600 17px Georgia;min-width:40px;padding:0 6px}
+#panelBody .notice {background:#c8b67e1a;border-left:2px solid #a4884b;padding:8px 12px;font-size:13px}
+#panelBody table {font:13px/1.5 Georgia}
+#panelBody td,#panelBody th {padding:12px 8px;border-bottom:1px solid var(--craft-rule)}
+#panelBody th {font-weight:600;color:#54432a}
+#panelBody .stock {gap:8px}
+#panelBody .stock span {background:#fbf4df;border:1px solid var(--craft-rule);padding:8px;font-size:13px}
+#panelBody .news-item {background:transparent;border-bottom:1px solid var(--craft-rule);padding:16px 8px;margin:0}
+#panelBody .news-item h3 {margin-top:0}
+#panelBody .news-item p {font-size:15px;max-width:74ch}
+#panelBody .news-urgent {border-left:3px solid #994b30;background:#e7d6ad44;padding-left:16px}
+
+/* Painted commodities are shared by manufacturing, transport and trade. */
+#panelBody .industry-summary {background:#183b4a;border:1px solid #9f8654;box-shadow:none;padding:16px;gap:8px;color:#fff0cf;font-size:15px}
+#panelBody .industry-summary span {color:#e3d7b8;font-size:13px}
+#panelBody .warehouse-ledger {margin:12px 0;border-block:1px solid var(--craft-rule)}
+#panelBody .workshop {padding:16px;gap:16px;align-items:center}
+#panelBody .workshop .commodity-portrait {width:80px;height:80px;flex-basis:80px}
+#panelBody .workshop b,#panelBody .recruit-card b {font-size:20px;font-weight:600}
+#panelBody .workshop-info>small,#panelBody .workshop-info>span {font-size:13px;line-height:1.6;color:#5a513e}
+#panelBody .workshop .numbers {margin-top:12px}
+#panelBody .workshop.locked {opacity:1;background:#e3d6b544}
+#panelBody .workshop.locked .commodity-portrait {filter:saturate(.45);opacity:.65}
+#panelBody .recruit-card {gap:20px;min-height:116px}
+#panelBody .recruit-card .commodity-portrait,#panelBody .recruit-card .military-portrait {width:80px;height:80px;flex-basis:80px}
+#panelBody .recruit-card small {font-size:13px;display:block;margin:4px 0 8px}
+#panelBody .transport-summary {gap:16px;padding:8px 8px 16px;border-bottom:1px solid #a28b5c}
+#panelBody .transport-summary h3 {margin:0 0 8px}
+#panelBody .transport-summary p {font-size:14px;margin:8px 0 0}
+#panelBody .transport-scroll {border:0;background:transparent;padding:0}
+#panelBody .transport-good {padding:12px 8px;gap:16px;border-bottom:1px solid var(--craft-rule)}
+#panelBody .transport-good .commodity-portrait {width:60px;height:60px;flex-basis:60px}
+#panelBody .transport-good label {font-size:16px}
+#panelBody .transport-good input[type=range] {min-height:36px;accent-color:#375e61}
+#panelBody .transport-good.unavailable {opacity:1;filter:none;color:#766a52}
+#panelBody .transport-good.unavailable .commodity-portrait {filter:saturate(.35);opacity:.6}
+#panelBody .trade-intro {display:flex;justify-content:space-between;gap:12px;align-items:center;padding:0 0 16px;border-bottom:1px solid var(--craft-rule)}
+#panelBody .trade-intro p {margin:4px 0}
+#panelBody .trade-rules {margin:0 0 16px}
+#panelBody .trade-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#panelBody .trade-commodity {margin:0;display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px 16px;align-items:center}
+#panelBody .trade-commodity h3 {font-size:19px;margin:0 0 4px}
+#panelBody .trade-commodity p {margin:0;color:var(--craft-muted);font-size:13px}
+#panelBody .trade-commodity .actions {grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 0}
+#panelBody .trade-commodity .sell-order {display:flex;align-items:center;gap:8px;font-size:13px}
+#panelBody .trade-commodity.has-bid {border-left:3px solid #416d63;padding-left:14px}
+#panelBody .trade-commodity.has-bid button[data-action=tradeBid] {background:#264e50;color:#fff4d7}
+#panelBody .trade-commodity:nth-child(even) {background:#e7d7af35}
+#panelBody .market-offer {max-width:720px;margin:20px auto;padding:24px}
+#panelBody .offer-heading {display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--craft-rule);padding-bottom:16px;margin-bottom:20px}
+#panelBody .offer-heading .commodity-portrait {width:88px;height:88px;flex-basis:88px}
+#panelBody .offer-heading h3 {margin:0 0 8px;font-size:26px}
+#panelBody button[data-action=acceptTrade],#panelBody button[data-action=startResearch] {background:#244d50;color:#fff2cf;border-color:#244d50}
+
+/* Three research seats, an uncluttered catalogue, and funding always at hand. */
+#panelBody .research-desk {gap:24px;grid-template-columns:minmax(280px,.72fr) minmax(0,1.5fr)}
+#panelBody .research-workbench {gap:16px}
+#panelBody .research-scroll {border:1px solid #ad9461;border-image:none;background:#fbf5df88;padding:16px;box-shadow:0 2px 3px #77654515}
+#panelBody .research-scroll h3 {font:600 19px Georgia;text-align:left;margin:0 0 12px;padding:0 0 12px;border-bottom:1px solid var(--craft-rule)}
+#panelBody .research-goal>p {margin:4px 0 8px;font-style:italic;color:var(--craft-muted)}
+#panelBody .research-goal>button {margin-right:4px}
+#panelBody .research-projects {gap:12px;margin:0}
+#panelBody .research-project {margin:0;padding:12px;border-left:3px solid #4e7165}
+#panelBody .technology-heading {min-height:48px;gap:12px}
+#panelBody .technology-heading b {font-size:16px;line-height:1.35}
+#panelBody .technology-heading small {margin-top:4px}
+#panelBody .research-funding {background:#e8d9b5;padding:8px;border:0;margin-top:12px}
+#panelBody .research-funding button {font-size:22px;min-width:44px}
+#panelBody .research-project>details {margin:4px 0 0}
+#panelBody .research-vacancies {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#panelBody .research-vacancy {min-height:0;display:flex;flex-direction:column;padding:8px 4px;gap:4px;text-align:center;background:transparent;border:1px dashed #b7a177}
+#panelBody .research-vacancy>span {font-size:21px;line-height:24px;color:#958053}
+#panelBody .research-vacancy>div {flex:none}
+#panelBody .research-vacancy b {font:13px Georgia}
+#panelBody .research-vacancy small {display:none}
+#panelBody .research-vacancy button {width:100%;padding:8px 4px;font-size:13px;background:#f0e5c8}
+#panelBody .research-account>strong {font-size:14px;line-height:1.5}
+#panelBody .research-account details {margin:4px 0 0}
+#panelBody .research-categories {border:0;border-bottom:1px solid var(--craft-rule);background:none;padding:0 0 12px;gap:4px}
+#panelBody .research-categories button,#panelBody .research-view-switch button {font-size:13px;padding:8px 6px;min-height:44px}
+#panelBody .research-view-switch {margin:12px 0;gap:4px}
+#panelBody .research-view-switch button {background:transparent;border-color:#b8a37880}
+#panelBody .research-view-switch button[aria-pressed=true] {background:#e0ce9e;color:#382e20;box-shadow:inset 0 -3px #947b3e}
+#panelBody .research-search {font-size:13px;gap:8px}
+#panelBody .research-search input {min-height:44px}
+#panelBody .research-list-count {font-size:12px;margin:12px 0}
+#panelBody .research-entry {min-height:92px;padding:12px 0;gap:12px;border-color:var(--craft-rule)}
+#panelBody .research-entry-title {font-size:16px;gap:8px;line-height:1.4}
+#panelBody .research-entry-title>span {font-size:12px;line-height:1.8;font-variant-numeric:tabular-nums;color:#655837}
+#panelBody .research-entry-body>p {font-size:13px;margin:4px 0}
+#panelBody .research-entry-actions {max-width:170px;gap:4px}
+#panelBody .research-entry-actions button {font-size:13px;padding:8px 12px}
+#panelBody .research-entry-actions summary {padding:8px 4px;min-height:44px}
+#panelBody .research-entry-actions .knowledge-flags {background:none;border:0;box-shadow:none;min-height:28px;padding:0}
+#panelBody .research-art {border:0;filter:none;width:48px;height:52px;min-width:48px}
+#panelBody .research-art .commodity-portrait {width:46px;height:46px}
+#panelBody .research-art>.battle-wall-art {position:static;width:48px;height:52px}
+#panelBody .research-art .civilian-portrait {transform:scale(.55);flex:none}
+
+/* Regiment and fleet selections read as an illustrated roster, not giant buttons. */
+#panelBody .regiment-card {grid-template-columns:88px minmax(0,1fr);gap:20px;align-items:center;min-height:156px}
+#panelBody .army-roster {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+#panelBody .army-roster .regiment-card {margin:0}
+#panelBody .regiment-card>.military-portrait {width:88px;height:88px;margin:0;float:none}
+#panelBody .regiment-info {font:13px/1.5 Georgia}
+#panelBody .regiment-info p {margin:6px 0;color:#5d523d}
+#panelBody .regiment-info>button[data-action=selectRegiment] {font-size:20px;line-height:1.3;width:100%;background:none;border:0;border-bottom:1px solid var(--craft-rule);padding:4px 0 8px;box-shadow:none;color:var(--craft-ink);margin:0}
+#panelBody .regiment-info>button[data-action=selectRegiment]:after {content:'';float:right;width:20px;height:20px;border:1px solid #a68c59;margin:2px 0 0 8px;font:16px/18px Georgia;text-align:center;color:#244c46}
+#panelBody .regiment-info>button[data-action=selectRegiment][aria-pressed=true]:after {content:'✓';background:#e4d6b2}
+#panelBody .regiment-card:has(.regiment-info>button[aria-pressed=true]),#panelBody .fleet-card:has(>button[aria-pressed=true]) {border-left:4px solid #466d64;background:#d9e0c733;padding-left:13px}
+#panelBody .fleet-roster {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#panelBody .fleet-card {margin:0;font:13px/1.5 Georgia;min-height:180px}
+#panelBody .fleet-card .ship-portrait {width:70px;height:80px;margin:0 16px 8px 0}
+#panelBody .fleet-card>button[data-action=selectShip] {font-size:19px;background:none;box-shadow:none;border:0;border-bottom:1px solid var(--craft-rule);padding:4px 0 8px;text-align:left;color:var(--craft-ink)}
+#panelBody .fleet-card p {margin:8px 0;color:#5b513e;font:13px/1.5 Georgia}
+#panelBody .fleet-pick {gap:16px;background:#fbf3dc;padding:12px 16px;min-height:96px}
+#panelBody .fleet-pick .ship-portrait {float:none;margin:0;flex:none;width:70px}
+#panelBody .fleet-pick .fleet-check {width:24px;height:24px;flex:none;border:1px solid #a38a56;display:grid;place-items:center;background:#fff3ce;font:18px Georgia;color:#244d50}
+#panelBody .fleet-pick[aria-pressed=true] {background:#dce1cb;color:#2e3e32;box-shadow:inset 4px 0 #426d61}
+#panelBody .fleet-picker-actions {background:var(--craft-paper);border-top:1px solid var(--craft-rule);padding:16px 0;gap:8px}
+
+/* Diplomacy retains its scroll/map workflow and exact relationship positions. */
+#panel[data-view=diplomacy] #panelBody {background:var(--craft-enamel) center/400px}
+.menu-theme {--menu-paper:var(--craft-vellum);--menu-enamel:var(--craft-enamel);--menu-ink:var(--craft-ink);--menu-muted:var(--craft-muted)}
+#panelBody .menu-paper {border-width:10px;border-image-width:12px;box-shadow:0 2px 5px #0002;background:var(--craft-vellum) center/640px}
+#panelBody .menu-kicker {text-transform:none;letter-spacing:0;font-size:12px}
+#panelBody .menu-enamel-tabs button {background:#143749;color:#ead9ad;border-color:#ac915d66;box-shadow:none;font-size:14px}
+#panelBody .menu-enamel-tabs button[aria-pressed=true] {background:#dcc18a;color:#342a1d;border-color:#d9bf8b;box-shadow:inset 0 -3px #b48b42}
+#panelBody .overture-palette button {background:transparent;border-color:#b29c704d;box-shadow:none;font-size:14px;gap:6px}
+#panelBody .overture-palette button[aria-pressed=true] {background:#173e50;color:#fff0cb}
+#panelBody .diplomacy-budget {font-size:13px;padding:4px 0 8px}
+#panelBody .diplomacy-instruction h3 {margin:4px 0 12px;font-size:20px}
+#panelBody .diplomacy-guidance {font-size:14px}
+#panelBody .overture-picker>summary {background:var(--craft-enamel);color:#fff0ca;border:1px solid #b99b5f;padding:12px;font-size:14px}
+#panelBody .diplomacy-map-switch button {font-size:14px}
+#panelBody .atlas-mode-label {font-size:14px;margin-top:12px}
+#panelBody .atlas-pan-hint {font-size:12px}
+#panelBody .atlas-key {gap:6px}
+#panelBody .country-key {background:#eadbb933;font-size:13px;padding:8px}
+#panelBody .country-key[aria-pressed=true] {background:#173e50;color:#fff0cb}
+#panelBody .country-key span {font-size:13px}
+#panelBody .country-key small {font-size:11px;color:inherit}
+#panelBody .dossier-title {margin-bottom:16px}
+#panelBody .diplomatic-dossier .selected-country-strip h4 {font-size:27px;font-weight:600}
+#panelBody .relation-marker {border-radius:0}
+#panelBody .grant-repeat,#panelBody .grant-repeat:hover {background:none;border:0;box-shadow:none;color:var(--craft-ink);font-weight:600;padding:4px 0}
+#panelBody .subsidy-choice,#panelBody .subsidy-choice:hover,#panelBody .subsidy-choice[aria-pressed=true] {background:none;border:0;box-shadow:none;color:var(--craft-ink);padding:4px 2px}
+#panelBody .grant-choices {display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 12px}
+#panelBody .grant-choice {background:transparent;box-shadow:none;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:112px;padding:4px 12px 8px;font-size:17px}
+#panelBody .grant-choice svg {width:100px;height:72px;filter:drop-shadow(0 2px 1px #5d472c22)}
+#panelBody .grant-choice[aria-pressed=true] {background:#e3d1a04d;color:#342b1e;border:1px solid #9e8345;box-shadow:inset 0 -3px #ae8a40}
+#panelBody .grant-choice:hover {background:#fffae344}
+#panelBody .grant-choice .selected-tick,#panelBody .grant-choice .selection-ring {opacity:0}
+#panelBody .grant-choice[aria-pressed=true] .selected-tick,#panelBody .grant-choice[aria-pressed=true] .selection-ring {opacity:1}
+
+@media(min-width:850px){
+ #panelBody[data-view=industry] .workshop {width:calc(50% - 8px);margin:8px 8px 8px 0;vertical-align:top}
+ #panelBody .research-vacancies:has(.research-vacancy:only-child) {grid-template-columns:1fr}
+ #panelBody .research-vacancies:has(.research-vacancy:nth-child(2):last-child) {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomatic-scroll {display:grid;grid-template-columns:minmax(480px,1.2fr) minmax(0,1fr);gap:0 24px}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomacy-budget {grid-column:1/-1}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomacy-instruction {grid-column:1;grid-row:2}
+ #panelBody .diplomatic-desk[data-mode=grants] .grant-choices {grid-column:1;grid-row:3/6;margin:0}
+ #panelBody .diplomatic-desk[data-mode=grants] .grant-repeat {grid-column:2;grid-row:3;margin:0}
+ #panelBody .diplomatic-desk[data-mode=grants] .grant-repeat-description {grid-column:2;grid-row:4;margin:0}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomacy-explanation {grid-column:2;grid-row:5;font-size:13px;margin:8px 0}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomacy-guidance {grid-column:1/-1;margin:8px 0}
+ #panelBody .diplomatic-desk[data-mode=grants] .diplomatic-feedback {grid-column:1/-1}
+}
+@media(max-width:849px){
+ #app>header h1 {font-size:21px}#app>header {min-height:52px}
+ #menu {min-height:44px;font-size:13px}
+ #summary {gap:8px;font-size:11px}
+ #navigation {gap:4px;padding:4px 6px}
+ #navigation button {font-size:11px;gap:2px;min-height:48px}
+ #selection p {font-size:12px;line-height:1.4}#selection>b {font-size:16px}
+ #unitQueue button {min-height:40px;font-size:12px}
+ .map-controls {top:10px;right:10px;gap:3px}
+ .map-controls button {min-width:40px;padding:4px;min-height:44px}
+ #panel {width:calc(100% - 12px);height:calc(100% - 16px);max-height:calc(100% - 16px)}
+ #panel .dialog-head {min-height:60px;padding:4px 8px;border-width:6px;border-image-width:11px}
+ #panel .dialog-head h2 {font-size:23px}
+ #panel #panelBody {padding:16px 12px 24px}
+ #panelBody .row,#panelBody .card,#panelBody .recruit-card,#panelBody .workshop {padding:12px}
+ #panelBody .workshop {gap:12px}#panelBody .workshop b,#panelBody .recruit-card b {font-size:19px}
+ #panelBody .workshop .commodity-portrait {width:64px;height:64px;flex-basis:64px}
+ #panelBody .trade-grid,#panelBody .fleet-roster,#panelBody .army-roster {grid-template-columns:1fr}
+ #panelBody .trade-commodity {gap:8px 12px}
+ #panelBody .trade-commodity .sell-order {gap:6px}
+ #panelBody .trade-commodity button {font-size:13px;padding:8px 10px}
+ #panelBody .trade-intro {align-items:start}
+ #panelBody .trade-intro .ship-portrait {display:none}
+ #panelBody .transport-good {gap:10px;padding:12px 0}
+ #panelBody .transport-good .commodity-portrait {width:44px;height:48px;flex-basis:44px}
+ #panelBody .transport-good label {font-size:15px}
+ #panelBody .transport-good .numbers b {min-width:26px;padding:0 2px}
+ #panelBody .transport-good .numbers button {padding:4px;min-width:36px}
+ #panelBody .regiment-card {grid-template-columns:72px minmax(0,1fr);gap:12px}
+ #panelBody .regiment-card>.military-portrait {width:72px;height:80px}
+ #panelBody .regiment-info>button[data-action=selectRegiment] {font-size:19px}
+ #panelBody .market-offer {padding:16px}
+ #panelBody .offer-heading {gap:12px}
+ #panelBody .offer-heading h3 {font-size:22px}
+}
+@media(max-width:750px){
+ #panelBody .research-desk {grid-template-columns:1fr;gap:16px}
+ #panelBody .research-workbench {position:static;gap:12px}
+ #panelBody .research-scroll {padding:12px}
+ #panelBody .research-scroll h3 {font-size:18px;padding-bottom:8px;margin-bottom:8px}
+ #panelBody .research-goal {display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center}
+ #panelBody .research-goal h3 {grid-column:1;border:0;padding:0;margin:0;font-size:16px}
+ #panelBody .research-goal>p {grid-column:1;font-size:13px;margin:0}
+ #panelBody .research-goal>button {grid-column:2;grid-row:1/3;max-width:126px;font-size:13px;margin:0}
+ #panelBody .research-goal:has(.research-goal-content) {display:block}
+ #panelBody .research-goal:has(.research-goal-content)>button {margin:4px 4px 0 0}
+ #panelBody .research-projects {gap:8px}
+ #panelBody .research-vacancy {padding:4px;gap:2px}
+ #panelBody .research-vacancy>span {display:none}
+ #panelBody .research-vacancy b {font-size:12px;line-height:20px}
+ #panelBody .research-vacancy button {min-height:44px}
+ #panelBody .research-account {padding:10px 12px}
+ #panelBody .research-account>strong {font-size:13px}
+ #panelBody .research-account details {margin:0}
+ #panelBody .research-account summary {font-size:12px;padding:8px 0}
+ #panelBody .research-entry-title {font-size:15px}
+ #panelBody .research-entry-body {display:block}
+ #panelBody .research-entry-actions {max-width:none;justify-content:flex-start}
+ #panelBody .research-entry-actions .knowledge-flags {margin-right:auto}
+ #panelBody .research-entry {gap:8px}
+ #panelBody .research-search {flex-wrap:nowrap;font-size:0}
+ #panelBody .research-search input {flex:1;font-size:14px}
+ #panelBody .research-view-switch button,#panelBody .research-categories button {font-size:12px}
+ #panelBody .research-art {width:38px;min-width:38px;height:45px}
+ #panelBody .research-art .commodity-portrait {width:38px;height:42px}
+}
+@media(max-width:700px){
+ #panel[data-view=diplomacy] #panelBody {padding:8px}
+ #panelBody .menu-enamel-tabs button {font-size:12px;min-height:60px;padding:4px 2px}
+ #panelBody .menu-paper {border-width:7px;border-image-width:9px}
+ #panelBody .overture-palette button {font-size:12px;min-height:76px;padding:4px 2px}
+ #panelBody .diplomacy-budget {font-size:12px}
+ #panelBody .diplomacy-instruction h3 {font-size:18px;margin:4px 0 8px}
+ #panelBody .diplomacy-guidance {font-size:13px}
+ #panelBody .diplomacy-map-switch button {font-size:12px;padding:8px 4px}
+ #panelBody .diplomatic-dossier .selected-country-strip h4 {font-size:22px}
+ #panelBody .atlas-pan-hint {font-size:11px}
+ #panelBody .subsidy-choice {padding:4px 0;font-size:12px}
+ #panelBody .grant-choices {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ #panelBody .grant-choice {width:100%;min-width:0;padding:4px 1px 8px;font-size:14px}
+ #panelBody .grant-choice svg {width:100%;height:60px}
+}
+@media(max-height:550px) and (orientation:landscape){
+ #app>header h1 {font-size:20px}#app>header {min-height:44px}
+ #commandTitle {font-size:15px}
+ #navigation button {min-height:44px;font-size:9px;gap:0}
+ #panel .dialog-head {min-height:54px;padding:2px 8px;border-width:4px;border-image-width:9px}
+ #panel .dialog-head h2 {font-size:22px}
+ #panel #panelBody {padding:12px 16px}
+ #panelBody .research-desk {gap:16px;grid-template-columns:minmax(235px,.7fr) minmax(0,1.3fr)}
+ #panelBody .research-scroll {padding:12px}
+ #panelBody .research-catalogue {position:static}
+ #panelBody .research-categories {grid-template-columns:repeat(3,minmax(0,1fr))}
+ #panelBody .research-register {max-height:none;overflow:visible}
+ #panelBody .research-entry-body {display:block}
+ #panelBody .research-entry-actions {max-width:none;justify-content:flex-start}
+ #panelBody .research-entry-title {flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){button {transition:none}}
+/* The atlas occupies its own row below the phone's map controls. */
+@media(max-width:849px) and (orientation:portrait){
+ .mini-frame,.mini-frame.collapsed {top:174px;left:18px;right:auto}
+}
+
+/* The battlefield uses the same instruments, with the ground behind the units. */
+.battle-view {background:#d9c8a2;color:var(--craft-ink);font:14px/1.45 Georgia}
+.battle-view>header {background:var(--craft-enamel) center/400px;border-width:8px;border-image-width:14px;padding:8px 16px;gap:3px}
+.battle-view>header strong {font:600 22px Georgia}
+.battle-view>header span {font-size:13px;color:#e2d4b0}
+.battle-view .battle-tools,.battle-view .battle-actions,.battle-view .battle-roster {background:var(--craft-enamel) center/400px;border:0;padding:8px 16px;gap:8px}
+.battle-view button:not(.battle-tile) {border:1px solid #aa8b50;border-radius:2px;box-shadow:none;background:#eddfb9;color:#342e20;min-height:44px;font-size:14px}
+.battle-view .battle-tools button {flex:0 1 200px;background:#1a4052;color:#ecdfbd;border-color:#b2996380}
+.battle-view .battle-actions button {flex:0 1 220px}
+.battle-view .battle-actions button[data-do=ready],.battle-view .battle-actions button[data-do=endTurn] {background:#d6b778;border-color:#efd18d}
+.battle-view .battle-actions button[data-do=retreat] {margin-left:auto;background:#193b4c;color:#edc7aa;border-color:#c5a47b88}
+.battle-view .battle-viewport {background:linear-gradient(#86936c70,#b1ab7b60),url('assets/royal-meadow.png') center/640px 640px;border:2px solid #a68b56;scrollbar-color:#b6aa7c #596745}
+.battle-view .battle-board {margin-inline:auto;min-width:100%;background:linear-gradient(#86936c70,#b1ab7b60),url('assets/royal-meadow.png') center/640px 640px;box-shadow:none}
+.battle-view .battle-cell {stroke:#34482c20;stroke-width:.6;fill:#b8c19b08}
+.battle-view .battle-tile.reachable .battle-cell {fill:#b7d4d630;stroke:#d2e0ccaa;stroke-width:1.3}
+.battle-view .battle-tile.selected .battle-cell {animation:none;filter:none;fill:#f2d69a20;stroke:#fff0b6;stroke-width:3}
+.battle-view .battle-tile.target .battle-cell {stroke:#e8a567;stroke-width:3;stroke-dasharray:7 3;fill:#bc693c17}
+.battle-view .battle-terrain-art,.battle-view .battle-wall-art {position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.battle-view .battle-fort-connectors {position:absolute;inset:0;pointer-events:none}
+.battle-view .overview .battle-tile>small,.battle-view .overview .wall-label {display:none}
+.battle-view .battle-viewport:has(.overview) {display:flex;flex-direction:column}
+.battle-view .battle-board.overview {margin-block:auto;flex-shrink:0}
+.battle-view .painted-cover {object-fit:contain;filter:saturate(.65) brightness(.9);opacity:.9}
+.battle-view .battle-tile.friendly .battle-terrain-art,.battle-view .battle-tile.hostile .battle-terrain-art {opacity:.6}
+.battle-view .battle-tile.terrain-1 .battle-cell,.battle-view .battle-tile.terrain-2 .battle-cell {fill:#3d59391a}
+.battle-view .battle-tile.terrain-3 .battle-cell {fill:#63796c12}
+.battle-view .battle-tile.terrain-4 .battle-cell {fill:#535c431a}
+.battle-view .battle-tile.wall .battle-cell {fill:#9b987916;stroke:#6a69413d;stroke-width:.7}
+.battle-view .battle-tile.wall.target .battle-cell {stroke:#e8a567;stroke-width:3}
+.battle-view .battle-tile.breach .battle-cell {fill:transparent;stroke:#d0bf8e80;stroke-width:1}
+.battle-view .battle-formation {inset:0 0 10px;z-index:3;filter:drop-shadow(1px 2px 1px #182a2080)}
+.battle-view .battle-pennant {top:2%;right:3%;width:20%;height:18%;z-index:4}
+.battle-view .battle-tile .unit-caption {font:10px/12px Georgia;bottom:6px;background:#172b25e8;color:#fff0c7;padding:1px 4px;border:1px solid #b7b18280;z-index:5}
+.battle-view .battle-tile>i {height:4px;width:66%;bottom:1px;background:linear-gradient(to right,#a8c57b 0 var(--morale),#a9a58d var(--morale) var(--health),#924335 var(--health));z-index:5}
+.battle-view .battle-tile>small {position:absolute;bottom:3px;right:6px;z-index:2;font:10px/13px Georgia;color:#eae4c5;background:#354630a6;padding:1px 3px}
+.battle-view .wall-label {position:absolute;bottom:3px;left:7px;font-size:10px;color:#fff0c8;background:#443d30c9;padding:1px 3px;z-index:2}
+.battle-view .battle-detail {min-height:80px;padding:12px 16px;background:var(--craft-vellum) center/640px;border-top:1px solid #a08a5b;font-size:17px}
+.battle-view .battle-detail p {font-size:13px;line-height:1.4;margin:4px 0 0;color:#564b35}
+.battle-view .battle-roster {padding-top:8px;padding-bottom:8px}
+.battle-view .battle-roster button {display:grid;grid-template-columns:56px 1fr;grid-template-rows:auto auto;align-items:center;gap:2px 12px;min-width:188px;padding:8px 12px;text-align:left;background:#183c4b;color:#f0e1bc;border-color:#a58f6366}
+.battle-view .battle-roster .military-portrait {width:56px;height:64px;grid-row:1/3;grid-column:1;margin:0}
+.battle-view .battle-roster small {grid-column:2;color:#d1c3a1;font-size:12px}
+.battle-view .battle-roster [aria-pressed=true] {outline:0;background:#dec799;color:#302b20;box-shadow:inset 0 -3px #ad8640;border-color:#f1d798}
+.battle-view .battle-roster [aria-pressed=true] small {color:#625336}
+.battle-view .battle-hint {background:#e4d5af;color:#574d38;padding:6px 16px;font-size:12px;border-top:1px solid #b5a077}
+.battle-view .battle-result {background:var(--craft-vellum);padding:12px 16px;border-color:#a58d5a}
+#campaignBattle footer {background:#e9ddbb;border-top:1px solid #b5a077;padding:8px 16px;font-size:12px;color:#63583e}
+@media(max-width:700px){
+ .battle-view>header {padding:6px 12px}.battle-view>header strong {font-size:20px}
+ .battle-view .battle-tools,.battle-view .battle-actions,.battle-view .battle-roster {padding:8px;gap:6px}
+ .battle-view .battle-tools button,.battle-view .battle-actions button {flex:1;padding:6px;font-size:13px}
+ .battle-view .battle-detail {padding:8px 12px;font-size:16px;min-height:80px}
+ .battle-view .battle-detail p {font-size:12px}
+ .battle-view .battle-roster button {min-width:170px;grid-template-columns:44px 1fr;padding:6px 8px;column-gap:8px;font-size:13px}
+ .battle-view .battle-roster .military-portrait {width:44px;height:52px}
+ .battle-view .battle-hint {font-size:11px;padding:4px 12px}
+ #campaignBattle footer {padding:6px 12px;font-size:11px}
+}
+@media(max-height:550px){
+ .battle-view>header {padding:2px 12px;border-width:4px;border-image-width:9px;gap:1px;grid-template-columns:1fr auto;align-items:center}
+ .battle-view>header strong {font-size:17px}.battle-view>header span {font-size:11px}
+ .battle-view .battle-tools,.battle-view .battle-actions {padding:3px 8px}
+ .battle-view .battle-detail {padding:4px 12px;min-height:43px;font-size:13px;line-height:16px}
+ .battle-view .battle-detail p {font-size:11px;line-height:13px;margin:1px 0 0}
+ .battle-view .battle-roster {padding:3px 8px;height:50px;max-height:none}
+ .battle-view .battle-roster button {min-width:162px;height:44px;min-height:44px;padding:3px 8px;grid-template-columns:32px 1fr;grid-template-rows:17px 15px;font-size:12px;gap:0 8px}
+ .battle-view .battle-roster .military-portrait {width:32px;height:36px}
+ .battle-view .battle-roster small {font-size:10px;line-height:12px}
+ #campaignBattle footer {padding:3px 12px;font-size:11px}
+}

@@ -1,6 +1,6 @@
 import {TERRAIN_SURFACES} from './terrain-art.mjs';
 export const terrainPoint=t=>({x:t.x+(t.y%2)*.5,y:t.y*.866});
-export const seaTextureStrength=scale=>Math.max(0,Math.min(.34,(scale-24)/160));
+export const seaTextureStrength=scale=>Math.max(0,Math.min(.17,(scale-28)/380));
 export const largeTown=(state,t)=>!!t.townLevel||Object.values(state.nations).some(n=>n.capital===t.id);
 const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
 export function surfaceSites(tiles,colors){return tiles.map(t=>({...terrainPoint(t),rgb:rgb(colors[t.terrain]),family:TERRAIN_SURFACES[t.terrain]}));}
