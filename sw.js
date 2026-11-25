@@ -1,4 +1,4 @@
-const CACHE='imperialism-rebuild-git-01d322a9e81c';
+const CACHE='imperialism-rebuild-git-e41b081db735';
 // Province outlines are needed by the map even when the app is offline.
 const MAP_FILES=['map-borders.mjs'];
 const CRAFT_FILES=['atlas-ornament.mjs','campaign-polish.css','civilian-frames.mjs','landscape-surfaces.mjs','battle-effects.mjs',...['grass','sea','fort-parts','cover','riches'].map(name=>'assets/landscape/'+name+'.png'),'scholar-council.css','civilian-art.mjs',...['builder','engineer','explorer','merchant','spy'].map(role=>'assets/civilians/'+role+'-work.png'),'visual-craft.css','battle-art.mjs','grant-art.mjs'];
