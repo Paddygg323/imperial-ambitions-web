@@ -11,6 +11,7 @@ import {provinceBorderEdges,drawProvinceBorders} from './map-borders.mjs';
 import {selectionRing,labelPlacer,developmentMark} from './cartography.mjs';
 import {pendingAttackGroups} from './map-orders.mjs';
 import {MILITARY_ATLAS,drawMilitarySprite} from './military-art.mjs';
+import {SHIP_ATLAS,drawShipSprite,fleetPortraitShip,shipSpriteLayout,shipSpriteHit} from './ship-art.mjs';
 import {seaKnowledge} from './sea-knowledge.mjs';
 import {drawCultivation,drawDevelopment} from './development-art.mjs';
 import {fleetAnchor,fleetDisplayLocation,seaName,drawTent} from './map-markers.mjs';
@@ -33,6 +34,7 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  const oceanArt=new Image();oceanArt.src=new URL('./assets/royal-ocean.png',import.meta.url).href;oceanArt.onload=()=>{paintedSea=ctx.createPattern(oceanArt,'repeat');draw();};
  const paper=new Image();paper.src=new URL('./assets/royal-parchment.png',import.meta.url).href;paper.onload=()=>draw();
  const troops=new Image();troops.src=new URL(MILITARY_ATLAS.url,import.meta.url).href;troops.onload=()=>draw();
+ const shipArt=new Image();shipArt.src=new URL(SHIP_ATLAS.url,import.meta.url).href;shipArt.onload=()=>draw();
  const overseasDevelopment=new Image();overseasDevelopment.src=new URL('./assets/overseas-development.png',import.meta.url).href;overseasDevelopment.onload=()=>draw();
  const sites=new Image();sites.src=new URL('./assets/resource-sites.png',import.meta.url).href;sites.onload=()=>draw();
  const development=new Image();development.src=new URL('./assets/development.png',import.meta.url).href;development.onload=()=>draw();
@@ -219,11 +221,13 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
   for(const [location,ships] of fleets){
    const key=fleetAnchor(s,location);if(!key)continue;
    const [tx,ty]=key.split(',').map(Number),p=screen({x:tx,y:ty}),x=p.x,y=p.y;
-   fleetHits.push({tile:key,ships:ships.map(ship=>ship.id),x,y});
+   const portrait=fleetPortraitShip(ships,selectedShips()),shipSize=Math.max(44,scale*1.18);
+   const bounds=scale>=20?shipSpriteLayout(portrait.type,x,y+15,shipSize)?.destination:null;
+   fleetHits.push({tile:key,ships:ships.map(ship=>ship.id),x,y,bounds});
    if(ships.some(ship=>selectedShips().includes(ship.id)))selectionRing(ctx,x,y,Math.max(21,scale*.46),Math.max(18,scale*.37));
    if(ships.some(ship=>ship.order?.job==='sail')){ctx.save();ctx.strokeStyle='#e7d79a';ctx.lineWidth=1.3;ctx.setLineDash([3,3]);ctx.beginPath();ctx.ellipse(x,y,Math.max(16,scale*.40),Math.max(12,scale*.29),0,0,Math.PI*2);ctx.stroke();ctx.restore();}
    if(scale<20){ctx.fillStyle=s.nations[s.player].color;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();continue;}
-   sprite(10,x,y+15,Math.max(35,scale*.94),Math.max(33,scale*.86));
+   drawShipSprite(ctx,shipArt,portrait.type,x,y+15,shipSize,s.nations[portrait.owner]?.color);
    ctx.fillStyle='#fff4d5';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText(String(ships.length),x,y+24);
   }
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
@@ -247,12 +251,12 @@ export function createMap(canvas,getState,onSelect,{planningCivilian=()=>false,s
  let pointers=new Map(),dragged=false,start=null,pinch=0;
  canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});start={x:e.clientX,y:e.clientY};dragged=false;if(pointers.size===2){const [a,b]=[...pointers.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
  canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId)){if(planningFleet()){const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=null,d=scale*.6;for(const t of getState().tiles){if(!visible(getState(),getState().player,t))continue;const p=screen(t),distance=Math.hypot(p.x-x,p.y-y);if(distance<d){d=distance;best=t;}}hoverTile=best?.id??null;hoverPoint={x,y};canvas.style.cursor=best?(fleetTarget(best.id)?.valid?'crosshair':'not-allowed'):'pointer';draw();}return;}const old=pointers.get(e.pointerId),prior=[...pointers.values()],mid=prior.length===2?{x:(prior[0].x+prior[1].x)/2,y:(prior[0].y+prior[1].y)/2}:null;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const [a,b]=[...pointers.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch>0){const r=canvas.getBoundingClientRect();zoomAt(d/pinch,mid.x-r.left,mid.y-r.top);cx-=((a.x+b.x)/2-mid.x)/scale;cy-=((a.y+b.y)/2-mid.y)/scale;}pinch=d;dragged=true;}else{cx-=(e.clientX-old.x)/scale;cy-=(e.clientY-old.y)/scale;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>6)dragged=true;}draw();});
- canvas.addEventListener('pointerup',e=>{const wasSingle=pointers.size===1;pointers.delete(e.pointerId);if(!dragged&&wasSingle){const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(onMapTap())return;const attack=attackHits.find(a=>Math.hypot(a.mid.x-x,a.mid.y-y)<30||a.points.some(p=>Math.hypot(p.x-x,p.y-y)<14));if(attack){onArmyOrder(attack.units);draw();return;}if(planningFleet()){const target=seaOrderHits.find(t=>Math.abs(t.x-x)<65&&Math.abs(t.y-y)<17);if(target){onSea(target.zone);draw();return;}}const hits=planningFleet()?[]:[...fleetHits.filter(f=>Math.abs(f.x-x)<22&&Math.abs(f.y-y)<24),...civilianHits.filter(c=>Math.abs(c.x-x)<18&&Math.abs(c.y-y)<26),...armyHits.filter(a=>Math.abs(a.x-x)<22&&Math.abs(a.y-y)<28)].sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y));const hit=hits[0];if(hit){selected=hit.tile;onSelect(hit.tile,hit.id??null,hit.units,hit.ships);draw();return;}let best=null,d=scale*.6;for(const t of getState().tiles){if(!visible(getState(),getState().player,t))continue;const p=screen(t),dist=Math.hypot(p.x-x,p.y-y);if(dist<d){d=dist;best=t;}}if(best){selected=best.id;onSelect(best.id);draw();}else {const knowledge=seaKnowledge(getState());let sea=null,dist=scale*.6;for(const [id,zone] of Object.entries(getState().seas?.cellZones??{})){const [tx,ty]=id.split(',').map(Number),p=screen({x:tx,y:ty}),d=Math.hypot(p.x-x,p.y-y);if(d<dist&&(knowledge.known.has(zone)||knowledge.frontier.has(zone))){dist=d;sea=zone;}}if(!sea||!onSea(sea))onBackground();}}});
+ canvas.addEventListener('pointerup',e=>{const wasSingle=pointers.size===1;pointers.delete(e.pointerId);if(!dragged&&wasSingle){const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(onMapTap())return;const attack=attackHits.find(a=>Math.hypot(a.mid.x-x,a.mid.y-y)<30||a.points.some(p=>Math.hypot(p.x-x,p.y-y)<14));if(attack){onArmyOrder(attack.units);draw();return;}if(planningFleet()){const target=seaOrderHits.find(t=>Math.abs(t.x-x)<65&&Math.abs(t.y-y)<17);if(target){onSea(target.zone);draw();return;}}const hits=planningFleet()?[]:[...fleetHits.filter(f=>shipSpriteHit(f,x,y)),...civilianHits.filter(c=>Math.abs(c.x-x)<18&&Math.abs(c.y-y)<26),...armyHits.filter(a=>Math.abs(a.x-x)<22&&Math.abs(a.y-y)<28)].sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y));const hit=hits[0];if(hit){selected=hit.tile;onSelect(hit.tile,hit.id??null,hit.units,hit.ships);draw();return;}let best=null,d=scale*.6;for(const t of getState().tiles){if(!visible(getState(),getState().player,t))continue;const p=screen(t),dist=Math.hypot(p.x-x,p.y-y);if(dist<d){d=dist;best=t;}}if(best){selected=best.id;onSelect(best.id);draw();}else {const knowledge=seaKnowledge(getState());let sea=null,dist=scale*.6;for(const [id,zone] of Object.entries(getState().seas?.cellZones??{})){const [tx,ty]=id.split(',').map(Number),p=screen({x:tx,y:ty}),d=Math.hypot(p.x-x,p.y-y);if(d<dist&&(knowledge.known.has(zone)||knowledge.frontier.has(zone))){dist=d;sea=zone;}}if(!sea||!onSea(sea))onBackground();}}});
  canvas.addEventListener('pointerleave',()=>{hoverTile=null;hoverPoint=null;canvas.style.cursor='';draw();});
  canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);dragged=true;});
  canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt(e.deltaY>0?.9:1.1,e.clientX-r.left,e.clientY-r.top);},{passive:false});
  new ResizeObserver(resize).observe(canvas);
- const ready=Promise.all([reviewed.ready,landscape.ready,civilianReady,...[desert,groundArt,ruralArt,townArt,biomes,oceanArt,paper,troops,overseasDevelopment,sites,development,resources,art].map(im=>im.decode())]).then(()=>{if(reviewed.errors.length)throw Error(reviewed.errors.join('; '));resize();draw();});
+ const ready=Promise.all([reviewed.ready,landscape.ready,civilianReady,...[desert,groundArt,ruralArt,townArt,biomes,oceanArt,paper,troops,shipArt,overseasDevelopment,sites,development,resources,art].map(im=>im.decode())]).then(()=>{if(reviewed.errors.length)throw Error(reviewed.errors.join('; '));resize();draw();});
  return {ready,viewport:()=>({scale,cx,cy,width:w,height:h}),draw,focus,fit,fitNation,focusSea(id,zoom=12){const z=getState().seas?.zones.find(z=>z.id===id);if(!z)return;const [x,y]=z.center.split(',').map(Number),p=point({x,y});cx=p.x;cy=p.y;scale=zoom;selected=id;draw();},select(id){selected=id;draw();},zoom(f){zoomAt(f);}};
 }
 
